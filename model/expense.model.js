@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const expenseSchema = new mongoose.Schema({
-  school: { type: mongoose.Schema.ObjectId, ref: "School" },
+  company: { type: mongoose.Schema.ObjectId, ref: "Company" },
   expenseCode: {
     type: String,
     required: true,
@@ -24,5 +24,5 @@ const expenseSchema = new mongoose.Schema({
 });
 
 // ✅ Compound unique index
-expenseSchema.index({ school: 1, expenseCode: 1 }, { unique: true });
+expenseSchema.index({ company: 1, expenseCode: 1 }, { unique: true });
 module.exports = mongoose.model("Expense", expenseSchema);

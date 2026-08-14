@@ -10,30 +10,30 @@ const {
   deleteGeneralmasterWithId,
 } = require("../controller/generalmaster.controller");
 
-router.post("/create", authMiddleware(["SCHOOL", "USER"]), createGeneralmaster);
+router.post("/create", authMiddleware(["COMPANY", "USER"]), createGeneralmaster);
 router.get(
   "/fetch-all",
-  authMiddleware(["SCHOOL", "USER"]),
+  authMiddleware(["COMPANY", "USER"]),
   getAllGeneralmasters,
 );
 router.get(
   "/fetch-single/:id",
-  authMiddleware(["SCHOOL", "USER"]),
+  authMiddleware(["COMPANY", "USER"]),
   getGeneralmasterWithId,
 );
 router.patch(
   "/update/:id",
-  authMiddleware(["SCHOOL", "USER"]),
+  authMiddleware(["COMPANY", "USER"]),
   updateGeneralmasterWithId,
 );
 router.delete(
   "/delete/:id",
-  authMiddleware(["SCHOOL", "USER"]),
+  authMiddleware(["COMPANY", "USER"]),
   deleteGeneralmasterWithId,
 );
 router.get(
   "/fetch-with-query",
-  authMiddleware(["SCHOOL", "USER", "TEACHER", "STUDENT", "PARENT"]),
+  authMiddleware(["COMPANY", "USER", "TEACHER", "STUDENT", "PARENT"]),
   getGeneralmasterWithQuery,
 );
 

@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const accounttransactionSchema = new mongoose.Schema({
-  school: { type: mongoose.Schema.ObjectId, ref: "School" },
+  company: { type: mongoose.Schema.ObjectId, ref: "Company" },
   doc_code: {
     type: String,
     default: "",
@@ -42,6 +42,6 @@ const accounttransactionSchema = new mongoose.Schema({
 });
 
 // ✅ Compound unique index
-// accounttransactionSchema.index({ school: 1, accounttransaction_code: 1 }, { unique: true });
-// accounttransactionSchema.index({ school: 1, accounttransaction_name: 1 }, { unique: true });
+// accounttransactionSchema.index({ company: 1, accounttransaction_code: 1 }, { unique: true });
+// accounttransactionSchema.index({ company: 1, accounttransaction_name: 1 }, { unique: true });
 module.exports = mongoose.model("Accounttransaction", accounttransactionSchema);

@@ -3,13 +3,13 @@ const { getTeacherWithQuery, loginTeacher,updateTeacherWithId,getTeacherWithId,s
 const router = express.Router();
 const authMiddleware = require("../auth/auth");
 
-router.post('/register',authMiddleware(['SCHOOL','USER']), registerTeacher);
-router.get("/fetch-with-query",authMiddleware(['SCHOOL','USER','TEACHER','STUDENT','PARENT']),getTeacherWithQuery);
+router.post('/register',authMiddleware(['COMPANY','USER']), registerTeacher);
+router.get("/fetch-with-query",authMiddleware(['COMPANY','USER','TEACHER','STUDENT','PARENT']),getTeacherWithQuery);
 router.post("/login", loginTeacher);
-router.patch("/update/:id", authMiddleware(['SCHOOL','USER']), updateTeacherWithId);
+router.patch("/update/:id", authMiddleware(['COMPANY','USER']), updateTeacherWithId);
 router.get("/fetch-own", authMiddleware(['TEACHER']), getTeacherOwnDetails);
-router.get("/fetch-single/:id", authMiddleware(['TEACHER','SCHOOL','USER']), getTeacherWithId);
-router.delete("/delete/:id",authMiddleware(['SCHOOL','USER']),  deleteTeacherWithId)
+router.get("/fetch-single/:id", authMiddleware(['TEACHER','COMPANY','USER']), getTeacherWithId);
+router.delete("/delete/:id",authMiddleware(['COMPANY','USER']),  deleteTeacherWithId)
 // router.get("/sign-out", signOut);
 // router.get("/is-login",  isTeacherLoggedIn)
 

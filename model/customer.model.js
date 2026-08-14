@@ -1,0 +1,32 @@
+const mongoose = require("mongoose");
+
+const customerSchema = new mongoose.Schema({
+  company: { type: mongoose.Schema.ObjectId, ref: "Company", required: true },
+  email: { type: String, required: true },
+  name: { type: String, required: true },
+  customer_code: { type: String, required: true },
+  seq: { type: Number, default: 0 },
+  // geolocation: { type: mongoose.Schema.ObjectId, ref: "Class" },
+  joinDate: { type: Date, default: new Date() },
+  status: {
+    type: String,
+    required: false,
+    default: "active",
+  },
+  phone_no: { type: String, required: true },
+  registration_no: { type: String, default: null },
+  address: { type: String, default: null },
+  zipcode: { type: String, default: null },
+  customer_image: { type: String, default: null },
+  public_id: { type: String, default: "" },
+  image: {
+    url: String,
+    public_id: String,
+  },
+  createdAt: { type: Date, default: new Date() },
+  password: { type: String, required: true },
+});
+
+// ✅ Compound unique index
+customerSchema.index({ company: 1, customer_code: 1 }, { unique: true });
+module.exports = mongoose.model("Customer", customerSchema);

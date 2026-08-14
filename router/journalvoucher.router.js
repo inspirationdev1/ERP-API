@@ -3,11 +3,11 @@ const router = express.Router();
 const authMiddleware = require('../auth/auth');
 const { createJournalvoucher, getAllJournalvouchers, getJournalvoucherWithId, updateJournalvoucherWithId, deleteJournalvoucherWithId,getJournalvoucherWithEmployeeId,getJournalvoucherPrint } = require("../controller/journalvoucher.controller");
 
-router.post("/create",authMiddleware(['SCHOOL','USER']), createJournalvoucher);
-router.get("/fetch-all",authMiddleware(['SCHOOL','USER']),getAllJournalvouchers);
-router.get("/fetch-single/:id",authMiddleware(['SCHOOL','USER']),  getJournalvoucherWithId);
-router.patch("/update/:id",authMiddleware(['SCHOOL','USER']), updateJournalvoucherWithId);
-router.delete("/delete/:id",authMiddleware(['SCHOOL','USER']), deleteJournalvoucherWithId);
-router.get("/fetch-print/:id",authMiddleware(['SCHOOL','USER']),  getJournalvoucherPrint);
-router.get("/fetch-employee-journalvoucher",authMiddleware(['SCHOOL','USER']),  getJournalvoucherWithEmployeeId);
+router.post("/create",authMiddleware(['COMPANY','USER']), createJournalvoucher);
+router.get("/fetch-all",authMiddleware(['COMPANY','USER']),getAllJournalvouchers);
+router.get("/fetch-single/:id",authMiddleware(['COMPANY','USER']),  getJournalvoucherWithId);
+router.patch("/update/:id",authMiddleware(['COMPANY','USER']), updateJournalvoucherWithId);
+router.delete("/delete/:id",authMiddleware(['COMPANY','USER']), deleteJournalvoucherWithId);
+router.get("/fetch-print/:id",authMiddleware(['COMPANY','USER']),  getJournalvoucherPrint);
+router.get("/fetch-employee-journalvoucher",authMiddleware(['COMPANY','USER']),  getJournalvoucherWithEmployeeId);
 module.exports = router;

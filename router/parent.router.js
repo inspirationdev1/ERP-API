@@ -3,15 +3,15 @@ const { getParentWithQuery, loginParent, updateParentWithId, getParentWithId, si
 const router = express.Router();
 const authMiddleware = require("../auth/auth");
 
-router.post('/register', authMiddleware(['SCHOOL','USER']), registerParent);
-router.get("/fetch-with-query", authMiddleware(['SCHOOL','USER','PARENT']), getParentWithQuery);
+router.post('/register', authMiddleware(['COMPANY','USER']), registerParent);
+router.get("/fetch-with-query", authMiddleware(['COMPANY','USER','PARENT']), getParentWithQuery);
 router.post("/login", loginParent);
-router.patch("/update/:id", authMiddleware(['SCHOOL','USER']), updateParentWithId);
+router.patch("/update/:id", authMiddleware(['COMPANY','USER']), updateParentWithId);
 router.get("/fetch-own", authMiddleware(['PARENT']), getParentOwnDetails);
-router.get("/fetch-all", authMiddleware(['SCHOOL','USER']), getAllParents);
+router.get("/fetch-all", authMiddleware(['COMPANY','USER']), getAllParents);
 
-router.get("/fetch-single/:id", authMiddleware(['PARENT', 'SCHOOL']), getParentWithId);
-router.delete("/delete/:id", authMiddleware(['SCHOOL']), deleteParentWithId)
+router.get("/fetch-single/:id", authMiddleware(['PARENT', 'COMPANY']), getParentWithId);
+router.delete("/delete/:id", authMiddleware(['COMPANY']), deleteParentWithId)
 // router.get("/sign-out", signOut);
 // router.get("/is-login",  isParentLoggedIn)
 

@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const expensedetailSchema = new mongoose.Schema({
-  school: { type: mongoose.Schema.ObjectId, ref: "School" },
+  company: { type: mongoose.Schema.ObjectId, ref: "Company" },
   employee: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Employee",

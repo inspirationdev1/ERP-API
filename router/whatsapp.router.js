@@ -6,8 +6,8 @@ const multer = require("multer");
 
 // store file temporarily
 const upload = multer({ dest: "uploads/" });
-router.post("/send_whatsapp", upload.single("file"),authMiddleware(['SCHOOL','USER']), send_whatsapp);
-router.post("/send_bulk_whatsapp", upload.single("file"),authMiddleware(['SCHOOL','USER']), send_bulk_whatsapp);
+router.post("/send_whatsapp", upload.single("file"),authMiddleware(['COMPANY','USER']), send_whatsapp);
+router.post("/send_bulk_whatsapp", upload.single("file"),authMiddleware(['COMPANY','USER']), send_bulk_whatsapp);
 
 module.exports = router;
 

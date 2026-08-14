@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const salesinvoiceSchema = new mongoose.Schema({
-  school: { type: mongoose.Schema.ObjectId, ref: "School" },
+  company: { type: mongoose.Schema.ObjectId, ref: "Company" },
   siCode: {
     type: String,
     required: true,
@@ -10,16 +10,19 @@ const salesinvoiceSchema = new mongoose.Schema({
   seq: { type: Number, default: 0 },
   invoiceDate: { type: Date, required: true },
   invoiceTime: { type: Date, required: true },
-  class: { type: mongoose.Schema.ObjectId, ref: "Class", required: true },
-  section: { type: mongoose.Schema.ObjectId, ref: "Section", required: true },
-  student: {
+  geolocation: {
+    type: mongoose.Schema.ObjectId,
+    ref: "Geolocation",
+    required: true,
+  },
+  customer: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Student",
+    ref: "Customer",
     required: true,
   },
   paymentStatus: { type: String, default: "pending" },
   status: { type: String, default: "valid" },
-  student_name: { type: String, default: "" },
+  customer_name: { type: String, default: "" },
   remarks: { type: String, default: "" },
   month: { type: Number, default: new Date().getMonth() + 1 },
   monthname: { type: String, default: "" },
@@ -29,5 +32,5 @@ const salesinvoiceSchema = new mongoose.Schema({
 });
 
 // ✅ Compound unique index
-salesinvoiceSchema.index({ school: 1, siCode: 1 }, { unique: true });
+salesinvoiceSchema.index({ company: 1, siCode: 1 }, { unique: true });
 module.exports = mongoose.model("Salesinvoice", salesinvoiceSchema);

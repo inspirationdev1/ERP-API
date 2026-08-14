@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const journalvoucherSchema = new mongoose.Schema({
-    school: { type: mongoose.Schema.ObjectId, ref: 'School' },
+    company: { type: mongoose.Schema.ObjectId, ref: 'Company' },
     jv_code: {
         type: String,
         required: true
@@ -19,5 +19,5 @@ const journalvoucherSchema = new mongoose.Schema({
 })
 
 // ✅ Compound unique index
-journalvoucherSchema.index({ school: 1, jv_code: 1 }, { unique: true });
+journalvoucherSchema.index({ company: 1, jv_code: 1 }, { unique: true });
 module.exports = mongoose.model("Journalvoucher", journalvoucherSchema)

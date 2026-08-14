@@ -11,31 +11,31 @@ const {
   getNumberseqWithQuery,
 } = require("../controller/numberseq.controller");
 
-router.post("/create", authMiddleware(["SCHOOL", "USER"]), createNumberseq);
-router.get("/fetch-all", authMiddleware(["SCHOOL", "USER"]), getAllNumberseqs);
+router.post("/create", authMiddleware(["COMPANY", "USER"]), createNumberseq);
+router.get("/fetch-all", authMiddleware(["COMPANY", "USER"]), getAllNumberseqs);
 router.get(
   "/fetch-single/:id",
-  authMiddleware(["SCHOOL", "USER"]),
+  authMiddleware(["COMPANY", "USER"]),
   getNumberseqWithId,
 );
 router.patch(
   "/update/:id",
-  authMiddleware(["SCHOOL", "USER"]),
+  authMiddleware(["COMPANY", "USER"]),
   updateNumberseqWithId,
 );
 router.delete(
   "/delete/:id",
-  authMiddleware(["SCHOOL", "USER"]),
+  authMiddleware(["COMPANY", "USER"]),
   deleteNumberseqWithId,
 );
 router.get(
   "/fetch-sequence/:id",
-  authMiddleware(["SCHOOL", "USER"]),
+  authMiddleware(["COMPANY", "USER"]),
   getNumberseqWithScreenId,
 );
 router.get(
   "/fetch-with-query",
-  authMiddleware(["SCHOOL", "USER", "TEACHER", "STUDENT", "PARENT"]),
+  authMiddleware(["COMPANY", "USER", "TEACHER", "STUDENT", "PARENT"]),
   getNumberseqWithQuery,
 );
 module.exports = router;

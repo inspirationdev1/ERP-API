@@ -55,8 +55,7 @@ module.exports = {
         .populate("religion")
         .populate("mothertongue")
         .populate("modeoftransport")
-        .populate("firstlanguage")
-        ;
+        .populate("firstlanguage");
       res.status(200).json({ success: true, data: filteredStudents });
     } catch (error) {
       console.log("Error in fetching Student with query", error);
@@ -246,9 +245,7 @@ module.exports = {
         .populate("religion")
         .populate("mothertongue")
         .populate("modeoftransport")
-        .populate("firstlanguage")
-        ;
-
+        .populate("firstlanguage");
       if (resp) {
         const admissionAttachments = await Admissionattachment.find({
           student_id: id, // ✅ probably should be student instead of _id
@@ -526,6 +523,4 @@ module.exports = {
     }
   },
 };
-async function saveAdmissionAttachements(files){
-    
-}
+async function saveAdmissionAttachements(files) {}

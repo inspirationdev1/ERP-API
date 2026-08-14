@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 
 const Salesinvoice = require("../model/salesinvoice.model");
 const Salesinvoicedetail = require("../model/salesinvoicedetail.model");
-const Student = require("../model/student.model");
+const Customer = require("../model/customer.model");
 const Taxrate = require("../model/taxrate.model");
 const Accounttransaction = require("../model/accounttransaction.model");
 const Accountsetup = require("../model/accountsetup.model");
@@ -18,12 +18,11 @@ const {
 module.exports = {
   getAllSalesinvoices: async (req, res) => {
     try {
-      const schoolId = req.user.schoolId;
-      const allSalesinvoice = await Salesinvoice.find({ school: schoolId })
-        .populate("student")
-        .populate("class")
-        .populate("section")
-        .populate("school");
+      const companyId = req.user.companyId;
+      const allSalesinvoice = await Salesinvoice.find({ company: companyId })
+        .populate("customer")
+        .populate("geolocation")
+        .populate("company");
       res.status(200).json({
         success: true,
         message: "Success in fetching all  Salesinvoice",
@@ -40,13 +39,13 @@ module.exports = {
   getSalesinvoiceWithId: async (req, res) => {
     try {
       const id = req.params.id;
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
 
       const result = await Salesinvoice.aggregate([
         {
           $match: {
             _id: new mongoose.Types.ObjectId(id),
-            school: new mongoose.Types.ObjectId(schoolId),
+            company: new mongoose.Types.ObjectId(companyId),
           },
         },
 
@@ -81,11 +80,11 @@ module.exports = {
   },
   createSalesinvoice: async (req, res) => {
     try {
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
 
       const numberseqData = await getNumberseqWithScreenId({
         screen_id: "salesinvoice",
-        schoolId: schoolId,
+        companyId: companyId,
       });
       console.log("numberseqData.data", numberseqData);
       let seq = 1;
@@ -106,7 +105,7 @@ module.exports = {
 
       let salesInvoiceDetails = siDetail.map((item) => ({
         ...item,
-        school: schoolId,
+        company: companyId,
       }));
 
       // *****Start Check Accounts Integration******
@@ -126,7 +125,7 @@ module.exports = {
         ...req.body,
         siCode: code,
         seq: seq,
-        school: schoolId,
+        company: companyId,
         acctrans: acctrans,
       });
 
@@ -134,7 +133,7 @@ module.exports = {
       const siId = savedData._id || null;
       salesInvoiceDetails = salesInvoiceDetails.map((item) => ({
         ...item,
-        school: schoolId,
+        company: companyId,
         siId: siId,
       }));
 
@@ -149,8 +148,8 @@ module.exports = {
           doc_name: "salesinvoice",
           doc_date: savedData?.invoiceDate || "",
           doc_id: siId || "",
-          student: savedData?.student || null,
-          school: savedData?.school || null,
+          customer: savedData?.customer || null,
+          company: savedData?.company || null,
         }));
         const isIntegrated = await integrate_accounttransaction(acctrans || []);
         // *****End Insert Accounts Integration******
@@ -159,7 +158,7 @@ module.exports = {
       // ****Update Number Seq****
       const numberseqAfterUpdate = await updateNumberseqWithScreenId({
         screen_id: "salesinvoice",
-        schoolId: req.user.schoolId,
+        companyId: req.user.companyId,
       });
       console.log("numberseqAfterUpdate", numberseqAfterUpdate);
       // *********************
@@ -179,9 +178,9 @@ module.exports = {
     }
   },
   updateSalesinvoiceWithId: async (req, res) => {
-    // Not providing the  schoolId as salesinvoice Id will be unique.
+    // Not providing the  companyId as salesinvoice Id will be unique.
     try {
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
       let id = req.params.id;
       console.log(req.body);
 
@@ -190,9 +189,9 @@ module.exports = {
       const siId = id || null;
       const salesInvoiceDetails = siDetail.map((item) => ({
         ...item,
-        school: schoolId,
+        company: companyId,
         siId: siId,
-        student: req.body?.student || null,
+        customer: req.body?.customer || null,
       }));
 
       // 3️⃣ Save invoice details
@@ -218,7 +217,7 @@ module.exports = {
 
         await Salesinvoicedetail.deleteMany({
           siId: siId,
-          school: schoolId,
+          company: companyId,
         });
 
         await Salesinvoicedetail.insertMany(salesInvoiceDetails);
@@ -230,8 +229,8 @@ module.exports = {
           doc_name: "salesinvoice",
           doc_date: savedData?.invoiceDate || "",
           doc_id: siId || "",
-          student: savedData?.student || null,
-          school: savedData?.school || null,
+          customer: savedData?.customer || null,
+          company: savedData?.company || null,
         }));
         const isIntegrated = await integrate_accounttransaction(acctrans || []);
         // *****End Insert Accounts Integration******
@@ -254,7 +253,7 @@ module.exports = {
   },
   deleteSalesinvoiceWithId: async (req, res) => {
     try {
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
       let id = req.params.id;
 
       const receiptDetails = await ReceiptdetailModel.find({
@@ -279,7 +278,7 @@ module.exports = {
         { $set: { status: "cancel" } },
         { new: true }, // optional: returns updated document
       );
-      // await Salesinvoice.findOneAndDelete({ _id: id, school: schoolId });
+      // await Salesinvoice.findOneAndDelete({ _id: id, company: companyId });
       const SalesinvoiceAfterDelete = await Salesinvoice.findOne({ _id: id });
       res.status(200).json({
         success: true,
@@ -297,70 +296,55 @@ module.exports = {
   getSalesinvoicePrint: async (req, res) => {
     try {
       const id = req.params.id;
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
 
       const result = await Salesinvoice.aggregate([
         {
           $match: {
             _id: new mongoose.Types.ObjectId(id),
-            school: new mongoose.Types.ObjectId(schoolId),
+            company: new mongoose.Types.ObjectId(companyId),
           },
         },
-        // 🔹 Populate school
+        // 🔹 Populate company
         {
           $lookup: {
-            from: "schools", // collection name
-            localField: "school",
+            from: "companys", // collection name
+            localField: "company",
             foreignField: "_id",
-            as: "school",
+            as: "company",
           },
         },
         {
-          $unwind: "$school", // convert array → object
-        },
-        // 🔹 Populate class
-        {
-          $lookup: {
-            from: "classes", // collection name
-            localField: "class", // field in salesinvoice
-            foreignField: "_id", // field in classes
-            as: "class",
-          },
-        },
-        {
-          $unwind: {
-            path: "$class",
-            preserveNullAndEmptyArrays: true,
-          },
+          $unwind: "$company", // convert array → object
         },
 
-        // 🔹 Populate Section
+        // 🔹 Populate Geolocation
         {
           $lookup: {
-            from: "sections",
-            localField: "section",
+            from: "geolocations",
+            localField: "geolocation",
             foreignField: "_id",
-            as: "section",
+            as: "geolocation",
           },
         },
         {
           $unwind: {
-            path: "$section",
+            path: "$geolocation",
             preserveNullAndEmptyArrays: true,
           },
         },
-        // 🔹 Populate Student
+        // 🔹 Populate Customer
         {
           $lookup: {
-            from: "students",
-            localField: "student",
+            from: "customers",
+            localField: "customer",
             foreignField: "_id",
-            as: "student",
+            as: "customer",
           },
         },
         {
           $unwind: {
-            path: "$student",
+            path: "$customer",
             preserveNullAndEmptyArrays: true,
           },
         },
@@ -451,17 +435,17 @@ module.exports = {
       });
     }
   },
-  getSalesinvoiceWithStudentId: async (req, res) => {
+  getSalesinvoiceWithCustomerId: async (req, res) => {
     try {
       const id = req.params.id;
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
 
       const filterQuery = {};
-      filterQuery["school"] = new mongoose.Types.ObjectId(schoolId);
+      filterQuery["company"] = new mongoose.Types.ObjectId(companyId);
 
-      if (req.query.hasOwnProperty("student")) {
-        const studentId = req.query.student;
-        filterQuery["student"] = new mongoose.Types.ObjectId(studentId);
+      if (req.query.hasOwnProperty("customer")) {
+        const customerId = req.query.customer;
+        filterQuery["customer"] = new mongoose.Types.ObjectId(customerId);
       }
       filterQuery["status"] = "valid";
 
@@ -541,201 +525,34 @@ module.exports = {
         data: result, // contains invoice + invoiceDetails[]
       });
     } catch (e) {
-      console.error("Error in getSalesinvoiceWithStudentId", e);
+      console.error("Error in getSalesinvoiceWithCustomerId", e);
       res.status(500).json({
         success: false,
         message: "Error fetching Salesinvoice",
       });
     }
   },
-  createMultipleInvoice: async (req, res) => {
-    try {
-      const schoolId = req.user.schoolId;
 
-      console.log(req.body);
-
-      const classId = req.body?.class;
-      const sectionId = req.body?.section;
-      const feestructure = req.body?.feestructure;
-      const feestructure_name = req.body?.feestructure_name;
-      const feestype = req.body?.feestype;
-      const feeFrequency = req.body?.feeFrequency;
-      const feeAmount = req.body?.feeAmount;
-      const taxrate = req.body?.taxrate || null;
-      const tax_percent = req.body?.tax_percent || 0;
-      const taxtype = req.body?.taxtype || "inclusive";
-
-      const year = req.body?.year;
-      const month = req.body?.month;
-      const monthname = new Date(year, month - 1).toLocaleString("default", {
-        month: "long",
-      });
-      const invoiceDate = req.body?.invoiceDate;
-      const remarks = req.body?.remarks;
-
-      const invoiceTime = dayjs().format("YYYY-MM-DD HH:mm:ss");
-      const formattedinvoiceDate = dayjs(invoiceDate).format("YYYY-MM-DD");
-      const [dd, mm, yyyy] = formattedinvoiceDate.split("-").map(Number);
-
-      const invoiceExistData = await Salesinvoice.find({
-        school: schoolId,
-        status: "valid",
-        month: month,
-        year: year,
-        class: classId,
-        section: sectionId,
-      }).lean();
-      console.log(invoiceExistData);
-      if (invoiceExistData.length > 0) {
-        res.status(500).json({
-          success: false,
-          message:
-            "Failed Creation of Salesinvoice. Invoices already created for the month = " +
-            monthname,
-        });
-        return;
-      }
-
-      let filterQuery = { school: schoolId, status: "active" };
-      if (classId) {
-        filterQuery.student_class = classId;
-      }
-      if (sectionId) {
-        filterQuery.section = sectionId;
-      }
-      filterQuery.status = "active";
-      const studentsData = await Student.find(filterQuery).lean();
-      console.log(studentsData);
-
-      let invoiceCount = 0;
-      for (const item of studentsData) {
-        try {
-          const student_class = item?.student_class;
-          const section = item?.section;
-          const studentId = item?._id;
-          const student_name = item?.name;
-
-          const numberseqData = await getNumberseqWithScreenId({
-            screen_id: "salesinvoice",
-            schoolId: req.user.schoolId,
-          });
-          console.log("numberseqData.data", numberseqData);
-          let seq = 1;
-          let code = "";
-          if (numberseqData) {
-            seq = numberseqData.seq || 1;
-            code = numberseqData.code || "";
-          }
-
-          const newSalesinvoice = new Salesinvoice({
-            student: studentId,
-            student_name: student_name,
-            class: student_class,
-            section: section,
-            month: month,
-            monthname: monthname,
-            year: year,
-            invoiceDate: formattedinvoiceDate,
-            invoiceTime: invoiceTime,
-            school: schoolId,
-            siCode: code,
-            seq: seq,
-            remarks: remarks,
-          });
-          const savedData = await newSalesinvoice.save();
-
-          const siId = savedData._id || null;
-
-          //****Tax Calculation */
-          let netAmount = feeAmount || 0;
-          let taxable_amount = feeAmount || 0;
-          let tax_amount = 0;
-          if (taxtype === "inclusive") {
-            taxable_amount = Number(
-              (netAmount / (1 + tax_percent / 100)).toFixed(0),
-            );
-            tax_amount = Number((netAmount - taxable_amount).toFixed(0));
-          } else if (taxtype === "exclusive") {
-            taxable_amount = feeAmount || 0;
-            tax_amount = Number(
-              ((taxable_amount * tax_percent) / 100).toFixed(0),
-            );
-            netAmount = taxable_amount + tax_amount;
-          }
-
-          //******************* */
-
-          const newSalesinvoicedetail = new Salesinvoicedetail({
-            siId: siId,
-            student: studentId,
-            feestructure: feestructure,
-            feestype: feestype,
-            feeFrequency: feeFrequency,
-            itemId: feestructure,
-            itemName: feestructure_name,
-            feeAmount: feeAmount,
-            quantity: 1,
-            salesPrice: feeAmount,
-            grossAmount: feeAmount,
-            netAmount: feeAmount,
-            taxrate: taxrate || null,
-            tax_percent: tax_percent,
-            tax_amount: tax_amount,
-            taxable_amount: taxable_amount,
-            year: year,
-            month: month,
-            monthname: monthname,
-            school: schoolId,
-            remarks: remarks,
-          });
-          const saveddetailData = await newSalesinvoicedetail.save();
-          const numberseqAfterUpdate = await updateNumberseqWithScreenId({
-            screen_id: "salesinvoice",
-            schoolId: req.user.schoolId,
-          });
-          console.log("numberseqAfterUpdate", numberseqAfterUpdate);
-          invoiceCount++;
-        } catch (error) {
-          console.log(error.message);
-        }
-      }
-
-      // 4️⃣ Response
-      const savedData = { invoiceCount: invoiceCount };
-      res.status(200).json({
-        success: true,
-        data: savedData,
-        message: invoiceCount + " Salesinvoices are Created Successfully.",
-      });
-    } catch (e) {
-      console.error("Error creating sales invoice:", e);
-      res.status(500).json({
-        success: false,
-        message: "Failed Creation of Salesinvoice.",
-      });
-    }
-  },
   getSalesinvoiceWithQuery: async (req, res) => {
     try {
       const filterQuery = {};
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
 
-      filterQuery["school"] = schoolId;
+      filterQuery["company"] = companyId;
       if (req.query.search) {
         filterQuery.$or = [
           { siCode: { $regex: req.query.search, $options: "i" } },
-          { student_name: { $regex: req.query.search, $options: "i" } },
+          { customer_name: { $regex: req.query.search, $options: "i" } },
         ];
       }
 
       const filteredSalesinvoices = await Salesinvoice.find(filterQuery)
-        .populate("student")
-        .populate("class")
-        .populate("section")
-        .populate("school");
+        .populate("customer")
+        .populate("geolocation")
+        .populate("company");
       res.status(200).json({ success: true, data: filteredSalesinvoices });
     } catch (error) {
-      console.log("Error in fetching Student with query", error);
+      console.log("Error in fetching Customer with query", error);
       res.status(500).json({
         success: false,
         message: "Error  in fetching Salesinvoice  with query.",
@@ -749,7 +566,7 @@ const check_accounttransaction = async (transDetails) => {
     // 3️⃣ Save Accounttransactions
     if (transDetails.length > 0) {
       const accountsetupData = await Accountsetup.find({
-        school: transDetails[0]?.school,
+        company: transDetails[0]?.company,
         screen: "salesinvoice",
       })
         .populate("accountledger")
@@ -890,7 +707,7 @@ const integrate_accounttransaction = async (accountTransactions) => {
     if (accountTransactions.length > 0) {
       const deletData = await Accounttransaction.deleteMany({
         doc_id: accountTransactions[0]?.doc_id,
-        school: accountTransactions[0]?.school,
+        company: accountTransactions[0]?.company,
       });
       console.log("deletData", deletData);
 

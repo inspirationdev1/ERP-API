@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const paymentdetailSchema = new mongoose.Schema({
-  school: { type: mongoose.Schema.ObjectId, ref: "School" },
+  company: { type: mongoose.Schema.ObjectId, ref: "Company" },
   paymentId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Payment",

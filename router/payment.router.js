@@ -3,10 +3,10 @@ const router = express.Router();
 const authMiddleware = require('../auth/auth');
 const { createPayment, getAllPayments, getPaymentWithId, updatePaymentWithId, deletePaymentWithId,getPaymentPrint } = require("../controller/payment.controller");
 
-router.post("/create",authMiddleware(['SCHOOL','USER']), createPayment);
-router.get("/fetch-all",authMiddleware(['SCHOOL','USER']),getAllPayments);
-router.get("/fetch-single/:id",authMiddleware(['SCHOOL','USER']),  getPaymentWithId);
-router.patch("/update/:id",authMiddleware(['SCHOOL','USER']), updatePaymentWithId);
-router.delete("/delete/:id",authMiddleware(['SCHOOL','USER']), deletePaymentWithId);
-router.get("/fetch-print/:id",authMiddleware(['SCHOOL','USER']),  getPaymentPrint);
+router.post("/create",authMiddleware(['COMPANY','USER']), createPayment);
+router.get("/fetch-all",authMiddleware(['COMPANY','USER']),getAllPayments);
+router.get("/fetch-single/:id",authMiddleware(['COMPANY','USER']),  getPaymentWithId);
+router.patch("/update/:id",authMiddleware(['COMPANY','USER']), updatePaymentWithId);
+router.delete("/delete/:id",authMiddleware(['COMPANY','USER']), deletePaymentWithId);
+router.get("/fetch-print/:id",authMiddleware(['COMPANY','USER']),  getPaymentPrint);
 module.exports = router;

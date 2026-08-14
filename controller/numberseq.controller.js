@@ -7,10 +7,10 @@ const Screen = require("../model/screen.model");
 module.exports = {
   getAllNumberseqs: async (req, res) => {
     try {
-      const schoolId = req.user.schoolId;
-      const allNumberseq = await Numberseq.find({ school: schoolId }).populate(
-        "screen",
-      );
+      const companyId = req.user.companyId;
+      const allNumberseq = await Numberseq.find({
+        company: companyId,
+      }).populate("screen");
       res.status(200).json({
         success: true,
         message: "Success in fetching all  Numberseq",
@@ -27,8 +27,8 @@ module.exports = {
   getNumberseqWithQuery: async (req, res) => {
     try {
       const filterQuery = {};
-      const schoolId = req.user.schoolId;
-      filterQuery["school"] = schoolId;
+      const companyId = req.user.companyId;
+      filterQuery["company"] = companyId;
 
       if (req.query.search) {
         filterQuery.$or = [
@@ -47,8 +47,8 @@ module.exports = {
     }
   },
   createNumberseq: (req, res) => {
-    const schoolId = req.user.schoolId;
-    const newNumberseq = new Numberseq({ ...req.body, school: schoolId });
+    const companyId = req.user.companyId;
+    const newNumberseq = new Numberseq({ ...req.body, company: companyId });
     newNumberseq
       .save()
       .then((savedData) => {
@@ -68,8 +68,8 @@ module.exports = {
   },
   getNumberseqWithId: async (req, res) => {
     const id = req.params.id;
-    const schoolId = req.user.schoolId;
-    Numberseq.findOne({ _id: id, school: schoolId })
+    const companyId = req.user.companyId;
+    Numberseq.findOne({ _id: id, company: companyId })
       .populate("screen")
       .then((resp) => {
         if (resp) {
@@ -90,7 +90,7 @@ module.exports = {
   },
 
   updateNumberseqWithId: async (req, res) => {
-    // Not providing the  schoolId as numberseq Id will be unique.
+    // Not providing the  companyId as numberseq Id will be unique.
     try {
       let id = req.params.id;
       console.log(req.body);
@@ -111,10 +111,10 @@ module.exports = {
   },
   deleteNumberseqWithId: async (req, res) => {
     try {
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
       let id = req.params.id;
 
-      await Numberseq.findOneAndDelete({ _id: id, school: schoolId });
+      await Numberseq.findOneAndDelete({ _id: id, company: companyId });
       const NumberseqAfterDelete = await Numberseq.findOne({ _id: id });
       res.status(200).json({
         success: true,
@@ -131,11 +131,11 @@ module.exports = {
   },
   getNumberseqWithScreenId: async (req, res) => {
     const screen_id = req?.screen_id;
-    const schoolId = req.schoolId;
+    const companyId = req.companyId;
     try {
       const numberseqData = await Numberseq.find({
         screen: screen_id,
-        school: new mongoose.Types.ObjectId(schoolId),
+        company: new mongoose.Types.ObjectId(companyId),
       })
         .populate("screen")
         .lean();
@@ -161,15 +161,15 @@ module.exports = {
     }
   },
   updateNumberseqWithScreenId: async (req, res) => {
-    // Not providing the  schoolId as numberseq Id will be unique.
+    // Not providing the  companyId as numberseq Id will be unique.
     try {
       // let id = req.params.id;
       const screen_id = req?.screen_id;
-      const schoolId = req?.schoolId;
+      const companyId = req?.companyId;
 
       const numberSeqData = await Numberseq.find({
         screen: screen_id,
-        school: new mongoose.Types.ObjectId(schoolId),
+        company: new mongoose.Types.ObjectId(companyId),
       }).lean();
 
       let id = "";

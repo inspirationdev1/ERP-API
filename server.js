@@ -7,17 +7,22 @@ const mongoose = require("mongoose");
 
 // ROUTERS
 const schoolRouter = require("./router/school.router");
+const companyRouter = require("./router/company.router");
 const studentRouter = require("./router/student.router");
+const customerRouter = require("./router/customer.router");
+const supplierRouter = require("./router/supplier.router");
 const classRouter = require("./router/class.router");
 const subjectRouter = require("./router/subject.router");
 const sectionRouter = require("./router/section.router");
 const departmentRouter = require("./router/department.router");
 const feestypeRouter = require("./router/feestype.router");
+const itemtypeRouter = require("./router/itemtype.router");
 const gradeRouter = require("./router/grade.router");
 const taxrateRouter = require("./router/taxrate.router");
 const workindaysRouter = require("./router/workingdays.router");
 const classsubjectRouter = require("./router/classsubject.router");
 
+const geolocationRouter = require("./router/geolocation.router");
 const accountlevelRouter = require("./router/accountlevel.router");
 const accountledgerRouter = require("./router/accountledger.router");
 const accountsetupRouter = require("./router/accountsetup.router");
@@ -41,7 +46,10 @@ const screenRouter = require("./router/screen.router");
 const numberseqRouter = require("./router/numberseq.router");
 
 const feestructureRouter = require("./router/feestructure.router");
+const itemRouter = require("./router/item.router");
+
 const salesinvoiceRouter = require("./router/salesinvoice.router");
+const purchaseinvoiceRouter = require("./router/purchaseinvoice.router");
 const marksheetRouter = require("./router/marksheet.router");
 const receiptRouter = require("./router/receipt.router");
 const teacherRouter = require("./router/teacher.router");
@@ -60,6 +68,7 @@ const paymentRouter = require("./router/payment.router");
 const journalvoucherRouter = require("./router/journalvoucher.router");
 
 const schoolreportsRouter = require("./router/schoolreports.router");
+
 const printreportsRouter = require("./router/printreports.router");
 const financereportsRouter = require("./router/financereports.router");
 
@@ -93,7 +102,11 @@ mongoose
   });
 
 app.use("/api/school", schoolRouter);
+app.use("/api/company", companyRouter);
 app.use("/api/student", studentRouter);
+app.use("/api/customer", customerRouter);
+app.use("/api/supplier", supplierRouter);
+
 app.use("/api/teacher", teacherRouter);
 app.use("/api/employee", employeeRouter);
 app.use("/api/parent", parentRouter);
@@ -103,7 +116,9 @@ app.use("/api/subject", subjectRouter);
 app.use("/api/section", sectionRouter);
 app.use("/api/department", departmentRouter);
 app.use("/api/feestype", feestypeRouter);
+app.use("/api/itemtype", itemtypeRouter);
 app.use("/api/accountlevel", accountlevelRouter);
+app.use("/api/geolocation", geolocationRouter);
 app.use("/api/accountledger", accountledgerRouter);
 app.use("/api/accountsetup", accountsetupRouter);
 
@@ -133,7 +148,9 @@ app.use("/api/screen", screenRouter);
 app.use("/api/numberseq", numberseqRouter);
 
 app.use("/api/feestructure", feestructureRouter);
+app.use("/api/item", itemRouter);
 app.use("/api/salesinvoice", salesinvoiceRouter);
+app.use("/api/purchaseinvoice", purchaseinvoiceRouter);
 app.use("/api/marksheet", marksheetRouter);
 app.use("/api/receipt", receiptRouter);
 app.use("/api/examination", examRouter);
@@ -155,7 +172,7 @@ app.use("/api/financereports", financereportsRouter);
 app.get("/api/auth/check", authCheck);
 
 app.get("/", (req, res) => {
-  res.send("School API is running 🚀");
+  res.send("API is running 🚀");
 });
 
 const PORT = process.env.PORT || 5001;

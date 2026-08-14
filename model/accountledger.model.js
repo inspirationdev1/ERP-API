@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const accountledgerSchema = new mongoose.Schema({
-    school: { type: mongoose.Schema.ObjectId, ref: 'School' },
+    company: { type: mongoose.Schema.ObjectId, ref: 'Company' },
     accountledger_name: {
         type: String,
         required: true,
@@ -20,6 +20,6 @@ const accountledgerSchema = new mongoose.Schema({
 })
 
 // ✅ Compound unique index
-accountledgerSchema.index({ school: 1, accountledger_code: 1 }, { unique: true });
-accountledgerSchema.index({ school: 1, accountledger_name: 1 }, { unique: true });
+accountledgerSchema.index({ company: 1, accountledger_code: 1 }, { unique: true });
+accountledgerSchema.index({ company: 1, accountledger_name: 1 }, { unique: true });
 module.exports = mongoose.model("Accountledger", accountledgerSchema)

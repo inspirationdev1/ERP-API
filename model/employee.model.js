@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const employeeSchema = new mongoose.Schema({
-    school:{type:mongoose.Schema.ObjectId, ref:'School'},
+    company:{type:mongoose.Schema.ObjectId, ref:'Company'},
     email:{ type: String,  required:true },
     employee_name:{type:String, required:true},
     employee_code:{type:String, required:true},
@@ -38,6 +38,6 @@ const employeeSchema = new mongoose.Schema({
 })
 
 // ✅ Compound unique index
-employeeSchema.index({ school: 1, employee_code: 1 }, { unique: true });
-employeeSchema.index({ school: 1, employee_name: 1 }, { unique: true });
+employeeSchema.index({ company: 1, employee_code: 1 }, { unique: true });
+employeeSchema.index({ company: 1, employee_name: 1 }, { unique: true });
 module.exports = mongoose.model("Employee", employeeSchema)

@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const admissionattachmentSchema = new mongoose.Schema({
-    school: { type: mongoose.Schema.ObjectId, ref: 'School' },
+    company: { type: mongoose.Schema.ObjectId, ref: 'Company' },
     student_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },
     attachmenttype: {
         type: mongoose.Schema.Types.ObjectId,

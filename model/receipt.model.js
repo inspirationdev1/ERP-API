@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const receiptSchema = new mongoose.Schema({
-  school: { type: mongoose.Schema.ObjectId, ref: "School" },
+  company: { type: mongoose.Schema.ObjectId, ref: "Company" },
   receiptCode: {
     type: String,
     required: true,
@@ -21,5 +21,5 @@ const receiptSchema = new mongoose.Schema({
 });
 
 // ✅ Compound unique index
-receiptSchema.index({ school: 1, receiptCode: 1 }, { unique: true });
+receiptSchema.index({ company: 1, receiptCode: 1 }, { unique: true });
 module.exports = mongoose.model("Receipt", receiptSchema);

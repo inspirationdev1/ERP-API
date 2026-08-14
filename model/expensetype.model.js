@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const expensetypeSchema = new mongoose.Schema({
-  school: { type: mongoose.Schema.ObjectId, ref: "School" },
+  company: { type: mongoose.Schema.ObjectId, ref: "Company" },
   expensetype_name: {
     type: String,
     required: true,
@@ -15,6 +15,6 @@ const expensetypeSchema = new mongoose.Schema({
 });
 
 // ✅ Compound unique index
-expensetypeSchema.index({ school: 1, expensetype_code: 1 }, { unique: true });
-expensetypeSchema.index({ school: 1, expensetype_name: 1 }, { unique: true });
+expensetypeSchema.index({ company: 1, expensetype_code: 1 }, { unique: true });
+expensetypeSchema.index({ company: 1, expensetype_name: 1 }, { unique: true });
 module.exports = mongoose.model("Expensetype", expensetypeSchema);

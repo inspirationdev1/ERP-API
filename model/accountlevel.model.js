@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const accountlevelSchema = new mongoose.Schema({
-    school: { type: mongoose.Schema.ObjectId, ref: 'School' },
+    company: { type: mongoose.Schema.ObjectId, ref: 'Company' },
     accountlevel_name: {
         type: String,
         required: true,
@@ -20,6 +20,6 @@ const accountlevelSchema = new mongoose.Schema({
 })
 
 // ✅ Compound unique index
-accountlevelSchema.index({ school: 1, accountlevel_code: 1 }, { unique: true });
-accountlevelSchema.index({ school: 1, accountlevel_name: 1 }, { unique: true });
+accountlevelSchema.index({ company: 1, accountlevel_code: 1 }, { unique: true });
+accountlevelSchema.index({ company: 1, accountlevel_name: 1 }, { unique: true });
 module.exports = mongoose.model("Accountlevel", accountlevelSchema)

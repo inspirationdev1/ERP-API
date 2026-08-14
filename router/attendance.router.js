@@ -4,7 +4,7 @@ const { markAttendance, getAttendance, checkAttendance, printAttendance } = requ
 const authMiddleware = require('../auth/auth')
 // Mark attendance
 router.post('/mark', authMiddleware(['TEACHER']), markAttendance);
-router.get('/:studentId', authMiddleware(['SCHOOL','USER','TEACHER','STUDENT','PARENT']), getAttendance);
+router.get('/:studentId', authMiddleware(['COMPANY','USER','TEACHER','STUDENT','PARENT']), getAttendance);
 router.get('/check/:classId', authMiddleware(['TEACHER','USER']), checkAttendance);
 router.get('/print/:classId', authMiddleware(['TEACHER','USER']), printAttendance);
 module.exports = router;

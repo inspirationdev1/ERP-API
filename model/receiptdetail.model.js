@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const receiptdetailSchema = new mongoose.Schema({
-  school: { type: mongoose.Schema.ObjectId, ref: "School" },
+  company: { type: mongoose.Schema.ObjectId, ref: "Company" },
   receiptId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Receipt",

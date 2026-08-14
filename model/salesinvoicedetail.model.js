@@ -1,29 +1,25 @@
 const mongoose = require("mongoose");
 
 const salesinvoicedetailSchema = new mongoose.Schema({
-  school: { type: mongoose.Schema.ObjectId, ref: "School" },
+  company: { type: mongoose.Schema.ObjectId, ref: "Company" },
   siId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Salesinvoice",
     required: true,
   },
-  student: {
+  customer: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Student",
+    ref: "Customer",
     required: true,
   },
-  feestructure: {
+  item: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Feestructure",
+    ref: "Item",
     required: true,
   },
-  feestype: { type: mongoose.Schema.ObjectId, ref: "Feestype", required: true },
-  itemId: { type: mongoose.Schema.Types.ObjectId, required: true },
-  itemName: { type: String, default: "itemname" },
-  feeFrequency: { type: String, default: "monthly" },
-  feeAmount: { type: Number, default: 0 },
+  item_name: { type: String, default: "itemname" },
   quantity: { type: Number, default: 1 },
-  salesPrice: { type: Number, default: 0 },
+  sales_price: { type: Number, default: 0 },
   grossAmount: { type: Number, default: 0 },
   discountType: { type: String, default: "none" },
   discountMonth: { type: Number, default: 0 },

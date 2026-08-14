@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const accountsetupSchema = new mongoose.Schema({
-  school: { type: mongoose.Schema.ObjectId, ref: "School" },
+  company: { type: mongoose.Schema.ObjectId, ref: "Company" },
   screen: { type: String, required: true },
   screen_name: { type: String, required: true },
   accountledger: { type: mongoose.Schema.ObjectId, ref: "Accountledger" },
@@ -15,5 +15,5 @@ const accountsetupSchema = new mongoose.Schema({
 });
 
 // ✅ Compound unique index
-// accountsetupSchema.index({ school: 1, screen: 1 }, { unique: true });
+// accountsetupSchema.index({ company: 1, screen: 1 }, { unique: true });
 module.exports = mongoose.model("Accountsetup", accountsetupSchema);
