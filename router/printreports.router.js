@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../auth/auth");
 const {
-  printFeeInvoice,
   printSalesInvoice,
   printPurchaseInvoice,
   printExpense,
@@ -20,11 +19,7 @@ router.post(
   authMiddleware(["COMPANY", "USER", "TEACHER", "STUDENT", "PARENT"]),
   printPurchaseInvoice,
 );
-router.post(
-  "/print-feeinvoice",
-  authMiddleware(["COMPANY", "USER", "TEACHER", "STUDENT", "PARENT"]),
-  printFeeInvoice,
-);
+
 router.post(
   "/print-expense",
   authMiddleware(["COMPANY", "USER", "TEACHER", "STUDENT", "PARENT"]),

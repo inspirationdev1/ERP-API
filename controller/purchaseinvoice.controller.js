@@ -9,7 +9,7 @@ const Taxrate = require("../model/taxrate.model");
 const Accounttransaction = require("../model/accounttransaction.model");
 const Accountsetup = require("../model/accountsetup.model");
 
-const ReceiptdetailModel = require("../model/receiptdetail.model");
+const SupplierpaymentdetailModel = require("../model/supplierpaymentdetail.model");
 const {
   getNumberseqWithScreenId,
   updateNumberseqWithScreenId,
@@ -264,11 +264,11 @@ module.exports = {
       const companyId = req.user.companyId;
       let id = req.params.id;
 
-      const receiptDetails = await ReceiptdetailModel.find({
+      const paymentDetails = await SupplierpaymentdetailModel.find({
         piId: id,
         status: "valid",
       }).lean();
-      if (receiptDetails.length > 0) {
+      if (paymentDetails.length > 0) {
         res.status(500).json({
           success: false,
           message: "Cannot Delete Invoice, Receipt is against this invoice",
@@ -496,25 +496,24 @@ module.exports = {
       }
 
       if (result.length > 0) {
-        // const receiptDetails = await ReceiptdetailModel.find(filterQuery).lean();
-        const receiptDetails = await ReceiptdetailModel.aggregate([
+        const paymentDetails = await SupplierpaymentdetailModel.aggregate([
           { $match: filterQuery },
           {
             $group: {
               _id: "$piId",
               piCode: { $first: "$piCode" },
               totalPaidAmount: { $sum: "$paidAmount" },
-              receiptDetails: { $push: "$$ROOT" },
+              paymentDetails: { $push: "$$ROOT" },
             },
           },
         ]);
-        if (receiptDetails.length > 0) {
-          console.log("receiptDetails:", receiptDetails);
+        if (paymentDetails.length > 0) {
+          console.log("paymentDetails:", paymentDetails);
           for (const item of result) {
-            console.log("SI ID:", item._id);
+            console.log("PI ID:", item._id);
             console.log("Invoice Code:", item.piCode);
             const piId = item._id;
-            const filtered = receiptDetails.filter(
+            const filtered = paymentDetails.filter(
               (row) => row._id.toString() === piId.toString(),
             );
             console.log("filtered:", filtered);

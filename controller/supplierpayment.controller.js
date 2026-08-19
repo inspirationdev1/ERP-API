@@ -1,40 +1,41 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
+const Payment = require("../model/supplierpayment.model");
+const Paymentdetail = require("../model/supplierpaymentdetail.model");
 const Accounttransaction = require("../model/accounttransaction.model");
 const Accountsetup = require("../model/accountsetup.model");
-const Receipt = require("../model/receipt.model");
-const Receiptdetail = require("../model/receiptdetail.model");
 
 const {
   getNumberseqWithScreenId,
   updateNumberseqWithScreenId,
-} = require("../controller/numberseq.controller");
+} = require("./numberseq.controller");
+
 module.exports = {
-  getAllReceipts: async (req, res) => {
+  getAllPayments: async (req, res) => {
     try {
       const companyId = req.user.companyId;
-      const allReceipt = await Receipt.find({ company: companyId }).sort({
+      const allPayment = await Payment.find({ company: companyId }).sort({
         createdAt: -1,
       });
       res.status(200).json({
         success: true,
-        message: "Success in fetching all  Receipt",
-        data: allReceipt,
+        message: "Success in fetching all  Payment",
+        data: allPayment,
       });
     } catch (error) {
-      console.log("Error in getAllReceipt", error);
+      console.log("Error in getAllPayment", error);
       res.status(500).json({
         success: false,
-        message: "Server Error in Getting All Receipt. Try later",
+        message: "Server Error in Getting All Payment. Try later",
       });
     }
   },
-  getReceiptWithId: async (req, res) => {
+  getPaymentWithId: async (req, res) => {
     try {
       const id = req.params.id;
       const companyId = req.user.companyId;
 
-      const result = await Receipt.aggregate([
+      const result = await Payment.aggregate([
         {
           $match: {
             _id: new mongoose.Types.ObjectId(id),
@@ -44,39 +45,39 @@ module.exports = {
 
         {
           $lookup: {
-            from: "receiptdetails", // 👈 collection name (IMPORTANT)
+            from: "supplierpaymentdetails", // 👈 collection name (IMPORTANT)
             localField: "_id",
-            foreignField: "receiptId",
-            as: "receiptDetails",
+            foreignField: "paymentId",
+            as: "paymentDetails",
           },
         },
 
         {
           $lookup: {
-            from: "salesinvoices",
-            localField: "receiptDetails.siId",
+            from: "purchaseinvoices",
+            localField: "paymentDetails.piId",
             foreignField: "_id",
-            as: "salesInvoiceData",
+            as: "purchaseinvoiceData",
           },
         },
         {
           $addFields: {
-            receiptDetails: {
+            paymentDetails: {
               $map: {
-                input: "$receiptDetails",
+                input: "$paymentDetails",
                 as: "detail",
                 in: {
                   $mergeObjects: [
                     "$$detail",
                     {
-                      siId: {
+                      piId: {
                         $arrayElemAt: [
                           {
                             $filter: {
-                              input: "$salesInvoiceData",
+                              input: "$purchaseinvoiceData",
                               as: "fs",
                               cond: {
-                                $eq: ["$$fs._id", "$$detail.siId"],
+                                $eq: ["$$fs._id", "$$detail.piId"],
                               },
                             },
                           },
@@ -92,35 +93,35 @@ module.exports = {
         },
         {
           $project: {
-            salesInvoiceData: 0, // cleanup
+            purchaseinvoiceData: 0, // cleanup
           },
         },
         {
           $lookup: {
-            from: "customers",
-            localField: "receiptDetails.customer",
+            from: "suppliers",
+            localField: "paymentDetails.supplier",
             foreignField: "_id",
-            as: "customerData",
+            as: "supplierData",
           },
         },
         {
           $addFields: {
-            receiptDetails: {
+            paymentDetails: {
               $map: {
-                input: "$receiptDetails",
+                input: "$paymentDetails",
                 as: "detail",
                 in: {
                   $mergeObjects: [
                     "$$detail",
                     {
-                      customer: {
+                      supplier: {
                         $arrayElemAt: [
                           {
                             $filter: {
-                              input: "$customerData",
+                              input: "$supplierData",
                               as: "fs",
                               cond: {
-                                $eq: ["$$fs._id", "$$detail.customer"],
+                                $eq: ["$$fs._id", "$$detail.supplier"],
                               },
                             },
                           },
@@ -136,7 +137,7 @@ module.exports = {
         },
         {
           $project: {
-            customerData: 0, // cleanup
+            supplierData: 0, // cleanup
           },
         },
       ]);
@@ -144,29 +145,28 @@ module.exports = {
       if (!result.length) {
         return res.status(404).json({
           success: false,
-          message: "Receipt not found",
+          message: "Payment not found",
         });
       }
 
       res.status(200).json({
         success: true,
-        data: result[0], // contains receipt + receiptDetails[]
+        data: result[0], // contains payment + paymentDetails[]
       });
     } catch (e) {
-      console.error("Error in getReceiptWithId", e);
+      console.error("Error in getPaymentWithId", e);
       res.status(500).json({
         success: false,
-        message: "Error fetching Receipt",
+        message: "Error fetching Payment",
       });
     }
   },
-  createReceipt: async (req, res) => {
+  createPayment: async (req, res) => {
     try {
       const companyId = req.user.companyId;
-
       //***Number seq */
       const numberseqData = await getNumberseqWithScreenId({
-        screen_id: "receipt",
+        screen_id: "supplierpayment",
         companyId: req.user.companyId,
       });
       console.log("numberseqData.data", numberseqData);
@@ -178,20 +178,21 @@ module.exports = {
       }
       //****** */
 
-      // 2️⃣ Map receiptDetails
+      // 2️⃣ Map paymentDetails
       const paymentMethod = req.body?.paymentMethod || "";
-      const recDetail = req.body.receiptDetails || [];
-      let receiptDetails = recDetail.map((item) => ({
+      const payDetail = req.body.paymentDetails || [];
+      let paymentDetails = payDetail.map((item) => ({
         ...item,
         company: companyId,
         paymentMethod: paymentMethod,
       }));
+
       // *****Start Check Accounts Integration******
-      const isDrCrEqual = await check_accounttransaction(receiptDetails);
+      const isDrCrEqual = await check_accounttransaction(paymentDetails);
       if (!isDrCrEqual) {
         res.status(200).json({
           success: false,
-          message: "Receipt not Integrated",
+          message: "Payment not Integrated",
           data: req?.body,
         });
       }
@@ -199,36 +200,37 @@ module.exports = {
       let acctrans = isDrCrEqual?.accountTransactions || [];
       // *****End Check Accounts Integration******
 
-      // 1️⃣ Save receipt
-      const newReceipt = new Receipt({
+      // 1️⃣ Save payment
+      const newPayment = new Payment({
         ...req.body,
-        receiptCode: code,
+        paymentCode: code,
         seq: seq,
         company: companyId,
         acctrans: acctrans,
       });
 
-      const savedData = await newReceipt.save();
+      const savedData = await newPayment.save();
 
-      // 2️⃣ Map receiptDetails
-      //   const recDetail = req.body.receiptDetails || [];
-      const recId = savedData._id || null;
-      receiptDetails = receiptDetails.map((item) => ({
+      // 2️⃣ Map paymentDetails
+      //   const payDetail = req.body.paymentDetails || [];
+      const payId = savedData._id || null;
+      paymentDetails = paymentDetails.map((item) => ({
         ...item,
-        receiptId: recId,
+        company: companyId,
+        paymentId: payId,
       }));
 
-      // 3️⃣ Save receiptDetails
-      if (receiptDetails.length > 0) {
-        await Receiptdetail.insertMany(receiptDetails);
+      // 3️⃣ Save paymentDetails
+      if (paymentDetails.length > 0) {
+        await Paymentdetail.insertMany(paymentDetails);
 
         // *****Start Insert Accounts Integration******
         acctrans = isDrCrEqual?.accountTransactions.map((item) => ({
           ...item,
-          doc_code: savedData?.receiptCode || "",
-          doc_name: "receipt",
-          doc_date: savedData?.receiptDate || "",
-          doc_id: recId || "",
+          doc_code: savedData?.paymentCode || "",
+          doc_name: "supplierpayment",
+          doc_date: savedData?.paymentDate || "",
+          doc_id: payId || "",
           company: savedData?.company || null,
         }));
         const isIntegrated = await integrate_accounttransaction(acctrans || []);
@@ -237,7 +239,7 @@ module.exports = {
 
       // ****Update Number Seq****
       const numberseqAfterUpdate = await updateNumberseqWithScreenId({
-        screen_id: "receipt",
+        screen_id: "payment",
         companyId: req.user.companyId,
       });
       console.log("numberseqAfterUpdate", numberseqAfterUpdate);
@@ -247,127 +249,124 @@ module.exports = {
       res.status(200).json({
         success: true,
         data: savedData,
-        message: "Receipt is Created Successfully.",
+        message: "Payment is Created Successfully.",
       });
     } catch (e) {
-      console.error("Error creating receipt:", e);
+      console.error("Error creating payment:", e);
       res.status(500).json({
         success: false,
-        message: "Failed Creation of Receipt.",
+        message: "Failed Creation of Payment.",
       });
     }
   },
-  updateReceiptWithId: async (req, res) => {
-    // Not providing the  companyId as receipt Id will be unique.
+  updatePaymentWithId: async (req, res) => {
+    // Not providing the  companyId as payment Id will be unique.
     try {
       const companyId = req.user.companyId;
 
       let id = req.params.id;
       console.log(req.body);
 
-      // 2️⃣ Map receiptDetails
+      // 2️⃣ Map paymentDetails
       const paymentMethod = req.body?.paymentMethod || "";
-      const recDetail = req.body.receiptDetails || [];
-      const recId = id || null;
-      const receiptDetails = recDetail.map((item) => ({
+      const payDetail = req.body.paymentDetails || [];
+      const payId = id || null;
+      const paymentDetails = payDetail.map((item) => ({
         ...item,
         company: companyId,
-        receiptId: recId,
+        paymentId: payId,
         paymentMethod: paymentMethod,
       }));
 
       // *****Start Check Accounts Integration******
-      const isDrCrEqual = await check_accounttransaction(receiptDetails);
+      const isDrCrEqual = await check_accounttransaction(paymentDetails);
       if (!isDrCrEqual) {
         res.status(200).json({
           success: false,
-          message: "Receipt not Integrated",
-          data: savedData,
+          message: "Payment not Integrated",
+          data: req?.body,
         });
       }
 
       let acctrans = isDrCrEqual?.accountTransactions || [];
       // *****End Check Accounts Integration******
 
-      //   await Receipt.findOneAndUpdate({ _id: id }, { $set: { ...req.body, } });
-      const savedData = await Receipt.findOneAndUpdate(
+      const savedData = await Payment.findOneAndUpdate(
         { _id: id },
         { $set: { ...req.body, acctrans: acctrans } },
         { new: true, runValidators: true },
       );
 
-      // 3️⃣ Save receipt details
-      if (receiptDetails.length > 0) {
-        const deleteDetail = await Receiptdetail.deleteMany({
-          receiptId: recId,
+      // 3️⃣ Save payment details
+      if (paymentDetails.length > 0) {
+        await Paymentdetail.deleteMany({
+          paymentId: payId,
           company: companyId,
         });
-        console.log(deleteDetail);
 
-        await Receiptdetail.insertMany(receiptDetails);
-
+        await Paymentdetail.insertMany(paymentDetails);
         // *****Start Insert Accounts Integration******
         acctrans = isDrCrEqual?.accountTransactions.map((item) => ({
           ...item,
-          doc_code: savedData?.receiptCode || "",
-          doc_name: "receipt",
-          doc_date: savedData?.receiptDate || "",
-          doc_id: recId || "",
+          doc_code: savedData?.paymentCode || "",
+          doc_name: "supplierpayment",
+          doc_date: savedData?.paymentDate || "",
+          doc_id: payId || "",
           company: savedData?.company || null,
         }));
         const isIntegrated = await integrate_accounttransaction(acctrans || []);
         // *****End Insert Accounts Integration******
       }
-      const ReceiptAfterUpdate = await Receipt.findOne({ _id: id });
+      const PaymentAfterUpdate = await Payment.findOne({ _id: id });
       res.status(200).json({
         success: true,
-        message: "Receipt Updated",
-        data: ReceiptAfterUpdate,
+        message: "Payment Updated",
+        data: PaymentAfterUpdate,
       });
     } catch (error) {
-      console.log("Error in updateReceiptWithId", error);
+      console.log("Error in updatePaymentWithId", error);
       res.status(500).json({
         success: false,
-        message: "Server Error in Update Receipt. Try later",
+        message: "Server Error in Update Payment. Try later",
       });
     }
   },
-  deleteReceiptWithId: async (req, res) => {
+  deletePaymentWithId: async (req, res) => {
     try {
       const companyId = req.user.companyId;
       let id = req.params.id;
 
-      await Receipt.findOneAndUpdate(
+      await Payment.findOneAndUpdate(
         { _id: id },
         { $set: { status: "cancel" } },
         { new: true }, // optional: returns updated document
       );
-      await Receiptdetail.updateMany(
-        { receiptId: id },
+      await Paymentdetail.updateMany(
+        { paymentId: id },
         { $set: { status: "cancel" } },
         { new: true }, // optional: returns updated document
       );
-      // await Receipt.findOneAndDelete({ _id: id, company: companyId });
-      const ReceiptAfterDelete = await Receipt.findOne({ _id: id });
+      // await Payment.findOneAndDelete({ _id: id, company: companyId });
+      const PaymentAfterDelete = await Payment.findOne({ _id: id });
       res.status(200).json({
         success: true,
-        message: "Receipt Deleted.",
-        data: ReceiptAfterDelete,
+        message: "Payment Deleted.",
+        data: PaymentAfterDelete,
       });
     } catch (error) {
-      console.log("Error in updateReceiptWithId", error);
+      console.log("Error in updatePaymentWithId", error);
       res.status(500).json({
         success: false,
-        message: "Server Error in Deleting Receipt. Try later",
+        message: "Server Error in Deleting Payment. Try later",
       });
     }
   },
-  getReceiptPrint: async (req, res) => {
+  getPaymentPrint: async (req, res) => {
     try {
       const id = req.params.id;
       const companyId = req.user.companyId;
 
-      const result = await Receipt.aggregate([
+      const result = await Payment.aggregate([
         {
           $match: {
             _id: new mongoose.Types.ObjectId(id),
@@ -386,41 +385,41 @@ module.exports = {
         {
           $unwind: "$company", // convert array → object
         },
+
         {
           $lookup: {
-            from: "receiptdetails", // 👈 collection name (IMPORTANT)
+            from: "supplierpaymentdetails", // 👈 collection name (IMPORTANT)
             localField: "_id",
-            foreignField: "receiptId",
-            as: "receiptDetails",
+            foreignField: "paymentId",
+            as: "paymentDetails",
           },
         },
-        // 🔹 Populate Customer
         {
           $lookup: {
-            from: "customers",
-            localField: "receiptDetails.customer",
+            from: "suppliers",
+            localField: "paymentDetails.supplier",
             foreignField: "_id",
-            as: "customerData",
+            as: "supplierData",
           },
         },
         {
           $addFields: {
-            receiptDetails: {
+            paymentDetails: {
               $map: {
-                input: "$receiptDetails",
+                input: "$paymentDetails",
                 as: "detail",
                 in: {
                   $mergeObjects: [
                     "$$detail",
                     {
-                      customer: {
+                      supplier: {
                         $arrayElemAt: [
                           {
                             $filter: {
-                              input: "$customerData",
+                              input: "$supplierData",
                               as: "fs",
                               cond: {
-                                $eq: ["$$fs._id", "$$detail.customer"],
+                                $eq: ["$$fs._id", "$$detail.supplier"],
                               },
                             },
                           },
@@ -436,197 +435,18 @@ module.exports = {
         },
         {
           $project: {
-            customerData: 0, // cleanup
+            supplierData: 0, // cleanup
           },
         },
-        // 🔹 Populate Parent
-        {
-          $lookup: {
-            from: "parents",
-            localField: "receiptDetails.parent",
-            foreignField: "_id",
-            as: "parentData",
-          },
-        },
-        {
-          $addFields: {
-            receiptDetails: {
-              $map: {
-                input: "$receiptDetails",
-                as: "detail",
-                in: {
-                  $mergeObjects: [
-                    "$$detail",
-                    {
-                      parent: {
-                        $arrayElemAt: [
-                          {
-                            $filter: {
-                              input: "$parentData",
-                              as: "fs",
-                              cond: {
-                                $eq: ["$$fs._id", "$$detail.parent"],
-                              },
-                            },
-                          },
-                          0,
-                        ],
-                      },
-                    },
-                  ],
-                },
-              },
-            },
-          },
-        },
-        {
-          $project: {
-            parentData: 0, // cleanup
-          },
-        },
-        // 🔹 Populate Class
-        {
-          $lookup: {
-            from: "classes",
-            localField: "receiptDetails.class",
-            foreignField: "_id",
-            as: "classData",
-          },
-        },
-        {
-          $addFields: {
-            receiptDetails: {
-              $map: {
-                input: "$receiptDetails",
-                as: "detail",
-                in: {
-                  $mergeObjects: [
-                    "$$detail",
-                    {
-                      class: {
-                        $arrayElemAt: [
-                          {
-                            $filter: {
-                              input: "$classData",
-                              as: "fs",
-                              cond: {
-                                $eq: ["$$fs._id", "$$detail.class"],
-                              },
-                            },
-                          },
-                          0,
-                        ],
-                      },
-                    },
-                  ],
-                },
-              },
-            },
-          },
-        },
-        {
-          $project: {
-            classData: 0, // cleanup
-          },
-        },
-        // 🔹 Populate Section
-        {
-          $lookup: {
-            from: "sections",
-            localField: "receiptDetails.section",
-            foreignField: "_id",
-            as: "sectionData",
-          },
-        },
-        {
-          $addFields: {
-            receiptDetails: {
-              $map: {
-                input: "$receiptDetails",
-                as: "detail",
-                in: {
-                  $mergeObjects: [
-                    "$$detail",
-                    {
-                      section: {
-                        $arrayElemAt: [
-                          {
-                            $filter: {
-                              input: "$sectionData",
-                              as: "fs",
-                              cond: {
-                                $eq: ["$$fs._id", "$$detail.section"],
-                              },
-                            },
-                          },
-                          0,
-                        ],
-                      },
-                    },
-                  ],
-                },
-              },
-            },
-          },
-        },
-        {
-          $project: {
-            sectionData: 0, // cleanup
-          },
-        },
-        // 🔹 Populate Sales Invoicedetail
-        {
-          $lookup: {
-            from: "salesinvoicedetails", // collection name
-            localField: "receiptDetails.siId",
-            foreignField: "siId",
-            as: "salesInvoiceData",
-          },
-        },
-        {
-          $addFields: {
-            receiptDetails: {
-              $map: {
-                input: "$receiptDetails",
-                as: "detail",
-                in: {
-                  $mergeObjects: [
-                    "$$detail",
-                    {
-                      siId: {
-                        $arrayElemAt: [
-                          {
-                            $filter: {
-                              input: "$salesInvoiceData",
-                              as: "fs",
-                              cond: {
-                                $eq: ["$$fs.siId", "$$detail.siId"],
-                              },
-                            },
-                          },
-                          0,
-                        ],
-                      },
-                    },
-                  ],
-                },
-              },
-            },
-          },
-        },
-        {
-          $project: {
-            salesInvoiceData: 0, // cleanup
-          },
-        },
+
         // 🔹 SUM grossAmount
         {
           $addFields: {
-            totalinvAmount: {
-              $sum: "$receiptDetails.invAmount",
+            totalexpenseAmount: {
+              $sum: "$paymentDetails.invAmount",
             },
             totalpaidAmount: {
-              $sum: "$receiptDetails.paidAmount",
+              $sum: "$paymentDetails.paidAmount",
             },
           },
         },
@@ -635,19 +455,19 @@ module.exports = {
       if (!result.length) {
         return res.status(404).json({
           success: false,
-          message: "Receipt not found",
+          message: "Payment not found",
         });
       }
 
       res.status(200).json({
         success: true,
-        data: result[0], // contains receipt + receiptDetails[]
+        data: result[0], // contains payment + paymentDetails[]
       });
     } catch (e) {
-      console.error("Error in getReceiptPrint", e);
+      console.error("Error in getPaymentPrint", e);
       res.status(500).json({
         success: false,
-        message: "Error fetching getReceiptPrint",
+        message: "Error fetching getPaymentPrint",
       });
     }
   },
@@ -659,37 +479,37 @@ const check_accounttransaction = async (transDetails) => {
     if (transDetails.length > 0) {
       const accountsetupData = await Accountsetup.find({
         company: transDetails[0]?.company,
-        screen: "receipt",
+        screen: "supplierpayment",
         paymentMethod: transDetails[0]?.paymentMethod,
       })
         .populate("accountledger")
         .lean();
 
-      const customerTotals = Object.values(
+      const supplierTotals = Object.values(
         transDetails.reduce((acc, item) => {
-          const customerId = item.customer;
+          const supplierId = item.supplier;
 
-          if (!acc[customerId]) {
-            acc[customerId] = {
-              customer: customerId,
+          if (!acc[supplierId]) {
+            acc[supplierId] = {
+              supplier: supplierId,
               paidAmount: 0,
             };
           }
 
-          acc[customerId].paidAmount += item.paidAmount || 0;
+          acc[supplierId].paidAmount += item.paidAmount || 0;
 
           return acc;
         }, {}),
       );
 
-      console.log(customerTotals);
+      console.log(supplierTotals);
 
       const accountTransactions = [];
 
       let seq = 0;
-      for (const stud of customerTotals) {
-        const customerId = stud?.customer || null;
-        const paidAmount = stud?.paidAmount || 0;
+      for (const emp of supplierTotals) {
+        const supplierId = emp?.supplier || null;
+        const paidAmount = emp?.paidAmount || 0;
         for (const item of accountsetupData) {
           if (item?.mapping_type === "net_amount" && paidAmount > 0) {
             seq++;
@@ -698,7 +518,7 @@ const check_accounttransaction = async (transDetails) => {
               amount_type: item?.amount_type || "",
               mapping_type: item?.mapping_type || "",
               seq: seq,
-              customer: customerId || null,
+              supplier: supplierId || null,
               account_type: item?.accountledger?.account_type || "",
               accountledger: item?.accountledger?._id || null,
               accountledger_code: item?.accountledger?.accountledger_code || "",

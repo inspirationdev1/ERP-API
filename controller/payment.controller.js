@@ -15,8 +15,10 @@ const {
 module.exports = {
   getAllPayments: async (req, res) => {
     try {
-      const schoolId = req.user.schoolId;
-      const allPayment = await Payment.find({ school: schoolId });
+      const companyId = req.user.companyId;
+      const allPayment = await Payment.find({ company: companyId }).sort({
+        createdAt: -1,
+      });
       res.status(200).json({
         success: true,
         message: "Success in fetching all  Payment",
@@ -33,13 +35,13 @@ module.exports = {
   getPaymentWithId: async (req, res) => {
     try {
       const id = req.params.id;
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
 
       const result = await Payment.aggregate([
         {
           $match: {
             _id: new mongoose.Types.ObjectId(id),
-            school: new mongoose.Types.ObjectId(schoolId),
+            company: new mongoose.Types.ObjectId(companyId),
           },
         },
 
@@ -163,11 +165,11 @@ module.exports = {
   },
   createPayment: async (req, res) => {
     try {
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
       //***Number seq */
       const numberseqData = await getNumberseqWithScreenId({
         screen_id: "payment",
-        schoolId: req.user.schoolId,
+        companyId: req.user.companyId,
       });
       console.log("numberseqData.data", numberseqData);
       let seq = 1;
@@ -183,7 +185,7 @@ module.exports = {
       const payDetail = req.body.paymentDetails || [];
       let paymentDetails = payDetail.map((item) => ({
         ...item,
-        school: schoolId,
+        company: companyId,
         paymentMethod: paymentMethod,
       }));
 
@@ -205,7 +207,7 @@ module.exports = {
         ...req.body,
         paymentCode: code,
         seq: seq,
-        school: schoolId,
+        company: companyId,
         acctrans: acctrans,
       });
 
@@ -216,7 +218,7 @@ module.exports = {
       const payId = savedData._id || null;
       paymentDetails = paymentDetails.map((item) => ({
         ...item,
-        school: schoolId,
+        company: companyId,
         paymentId: payId,
       }));
 
@@ -231,7 +233,7 @@ module.exports = {
           doc_name: "payment",
           doc_date: savedData?.paymentDate || "",
           doc_id: payId || "",
-          school: savedData?.school || null,
+          company: savedData?.company || null,
         }));
         const isIntegrated = await integrate_accounttransaction(acctrans || []);
         // *****End Insert Accounts Integration******
@@ -240,7 +242,7 @@ module.exports = {
       // ****Update Number Seq****
       const numberseqAfterUpdate = await updateNumberseqWithScreenId({
         screen_id: "payment",
-        schoolId: req.user.schoolId,
+        companyId: req.user.companyId,
       });
       console.log("numberseqAfterUpdate", numberseqAfterUpdate);
       // *********************
@@ -260,9 +262,9 @@ module.exports = {
     }
   },
   updatePaymentWithId: async (req, res) => {
-    // Not providing the  schoolId as payment Id will be unique.
+    // Not providing the  companyId as payment Id will be unique.
     try {
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
 
       let id = req.params.id;
       console.log(req.body);
@@ -273,7 +275,7 @@ module.exports = {
       const payId = id || null;
       const paymentDetails = payDetail.map((item) => ({
         ...item,
-        school: schoolId,
+        company: companyId,
         paymentId: payId,
         paymentMethod: paymentMethod,
       }));
@@ -301,7 +303,7 @@ module.exports = {
       if (paymentDetails.length > 0) {
         await Paymentdetail.deleteMany({
           paymentId: payId,
-          school: schoolId,
+          company: companyId,
         });
 
         await Paymentdetail.insertMany(paymentDetails);
@@ -312,7 +314,7 @@ module.exports = {
           doc_name: "payment",
           doc_date: savedData?.paymentDate || "",
           doc_id: payId || "",
-          school: savedData?.school || null,
+          company: savedData?.company || null,
         }));
         const isIntegrated = await integrate_accounttransaction(acctrans || []);
         // *****End Insert Accounts Integration******
@@ -333,7 +335,7 @@ module.exports = {
   },
   deletePaymentWithId: async (req, res) => {
     try {
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
       let id = req.params.id;
 
       await Payment.findOneAndUpdate(
@@ -346,7 +348,7 @@ module.exports = {
         { $set: { status: "cancel" } },
         { new: true }, // optional: returns updated document
       );
-      // await Payment.findOneAndDelete({ _id: id, school: schoolId });
+      // await Payment.findOneAndDelete({ _id: id, company: companyId });
       const PaymentAfterDelete = await Payment.findOne({ _id: id });
       res.status(200).json({
         success: true,
@@ -364,26 +366,26 @@ module.exports = {
   getPaymentPrint: async (req, res) => {
     try {
       const id = req.params.id;
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
 
       const result = await Payment.aggregate([
         {
           $match: {
             _id: new mongoose.Types.ObjectId(id),
-            school: new mongoose.Types.ObjectId(schoolId),
+            company: new mongoose.Types.ObjectId(companyId),
           },
         },
-        // 🔹 Populate school
+        // 🔹 Populate company
         {
           $lookup: {
-            from: "schools", // collection name
-            localField: "school",
+            from: "companys", // collection name
+            localField: "company",
             foreignField: "_id",
-            as: "school",
+            as: "company",
           },
         },
         {
-          $unwind: "$school", // convert array → object
+          $unwind: "$company", // convert array → object
         },
 
         {
@@ -478,7 +480,7 @@ const check_accounttransaction = async (transDetails) => {
     // 3️⃣ Save Accounttransactions
     if (transDetails.length > 0) {
       const accountsetupData = await Accountsetup.find({
-        school: transDetails[0]?.school,
+        company: transDetails[0]?.company,
         screen: "payment",
         paymentMethod: transDetails[0]?.paymentMethod,
       })
@@ -587,7 +589,7 @@ const integrate_accounttransaction = async (accountTransactions) => {
     if (accountTransactions.length > 0) {
       const deletData = await Accounttransaction.deleteMany({
         doc_id: accountTransactions[0]?.doc_id,
-        school: accountTransactions[0]?.school,
+        company: accountTransactions[0]?.company,
       });
       console.log("deletData", deletData);
 

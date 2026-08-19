@@ -14,8 +14,10 @@ const {
 module.exports = {
   getAllExpenses: async (req, res) => {
     try {
-      const schoolId = req.user.schoolId;
-      const allExpense = await Expense.find({ school: schoolId });
+      const companyId = req.user.companyId;
+      const allExpense = await Expense.find({ company: companyId }).sort({
+        createdAt: -1,
+      });
       res.status(200).json({
         success: true,
         message: "Success in fetching all  Expense",
@@ -32,13 +34,13 @@ module.exports = {
   getExpenseWithId: async (req, res) => {
     try {
       const id = req.params.id;
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
 
       const result = await Expense.aggregate([
         {
           $match: {
             _id: new mongoose.Types.ObjectId(id),
-            school: new mongoose.Types.ObjectId(schoolId),
+            company: new mongoose.Types.ObjectId(companyId),
           },
         },
         // 🧑‍💼 EMPLOYEE POPULATE
@@ -176,12 +178,12 @@ module.exports = {
   },
   createExpense: async (req, res) => {
     try {
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
 
       //***Number seq */
       const numberseqData = await getNumberseqWithScreenId({
         screen_id: "expense",
-        schoolId: req.user.schoolId,
+        companyId: req.user.companyId,
       });
       console.log("numberseqData.data", numberseqData);
       let seq = 1;
@@ -196,7 +198,7 @@ module.exports = {
       const expDetail = req.body.expenseDetails || [];
       let expenseDetails = expDetail.map((item) => ({
         ...item,
-        school: schoolId,
+        company: companyId,
       }));
 
       // *****Start Check Accounts Integration******
@@ -215,7 +217,7 @@ module.exports = {
       // 1️⃣ Save expense
       const newExpense = new Expense({
         ...req.body,
-        school: schoolId,
+        company: companyId,
         expenseCode: code,
         seq: seq,
         acctrans: acctrans,
@@ -228,7 +230,7 @@ module.exports = {
       const expId = savedData._id || null;
       expenseDetails = expenseDetails.map((item) => ({
         ...item,
-        school: schoolId,
+        company: companyId,
         expenseId: expId,
       }));
 
@@ -244,7 +246,7 @@ module.exports = {
           doc_date: savedData?.expenseDate || "",
           doc_id: expId || "",
           employee: savedData?.employee || null,
-          school: savedData?.school || null,
+          company: savedData?.company || null,
         }));
         const isIntegrated = await integrate_accounttransaction(acctrans || []);
         // *****End Insert Accounts Integration******
@@ -253,7 +255,7 @@ module.exports = {
       // ****Update Number Seq****
       const numberseqAfterUpdate = await updateNumberseqWithScreenId({
         screen_id: "expense",
-        schoolId: req.user.schoolId,
+        companyId: req.user.companyId,
       });
       console.log("numberseqAfterUpdate", numberseqAfterUpdate);
       // *********************
@@ -273,9 +275,9 @@ module.exports = {
     }
   },
   updateExpenseWithId: async (req, res) => {
-    // Not providing the  schoolId as expense Id will be unique.
+    // Not providing the  companyId as expense Id will be unique.
     try {
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
 
       let id = req.params.id;
       console.log(req.body);
@@ -285,7 +287,7 @@ module.exports = {
       const expId = id || null;
       let expenseDetails = expDetail.map((item) => ({
         ...item,
-        school: schoolId,
+        company: companyId,
         expenseId: expId,
         employee: req.body?.employee || null,
       }));
@@ -313,7 +315,7 @@ module.exports = {
       if (expenseDetails.length > 0) {
         await Expensedetail.deleteMany({
           expenseId: expId,
-          school: schoolId,
+          company: companyId,
         });
 
         await Expensedetail.insertMany(expenseDetails);
@@ -326,7 +328,7 @@ module.exports = {
           doc_date: savedData?.expenseDate || "",
           doc_id: expId || "",
           employee: savedData?.employee || null,
-          school: savedData?.school || null,
+          company: savedData?.company || null,
         }));
         const isIntegrated = await integrate_accounttransaction(acctrans || []);
         // *****End Insert Accounts Integration******
@@ -349,7 +351,7 @@ module.exports = {
   },
   deleteExpenseWithId: async (req, res) => {
     try {
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
       let id = req.params.id;
 
       await Expense.findOneAndUpdate(
@@ -362,7 +364,7 @@ module.exports = {
         { $set: { status: "cancel" } },
         { new: true }, // optional: returns updated document
       );
-      // await Expense.findOneAndDelete({ _id: id, school: schoolId });
+      // await Expense.findOneAndDelete({ _id: id, company: companyId });
       const ExpenseAfterDelete = await Expense.findOne({ _id: id });
       res.status(200).json({
         success: true,
@@ -380,10 +382,10 @@ module.exports = {
   getExpenseWithEmployeeId: async (req, res) => {
     try {
       const id = req.params.id;
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
 
       const filterQuery = {};
-      filterQuery["school"] = new mongoose.Types.ObjectId(schoolId);
+      filterQuery["company"] = new mongoose.Types.ObjectId(companyId);
 
       if (req.query.hasOwnProperty("employee")) {
         const employeeId = req.query.employee;
@@ -470,26 +472,26 @@ module.exports = {
   getExpensePrint: async (req, res) => {
     try {
       const id = req.params.id;
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
 
       const result = await Expense.aggregate([
         {
           $match: {
             _id: new mongoose.Types.ObjectId(id),
-            school: new mongoose.Types.ObjectId(schoolId),
+            company: new mongoose.Types.ObjectId(companyId),
           },
         },
-        // 🔹 Populate school
+        // 🔹 Populate company
         {
           $lookup: {
-            from: "schools", // collection name
-            localField: "school",
+            from: "companys", // collection name
+            localField: "company",
             foreignField: "_id",
-            as: "school",
+            as: "company",
           },
         },
         {
-          $unwind: "$school", // convert array → object
+          $unwind: "$company", // convert array → object
         },
 
         // 🧑‍💼 EMPLOYEE POPULATE
@@ -596,7 +598,7 @@ const check_accounttransaction = async (transDetails) => {
     // 3️⃣ Save Accounttransactions
     if (transDetails.length > 0) {
       const accountsetupData = await Accountsetup.find({
-        school: transDetails[0]?.school,
+        company: transDetails[0]?.company,
         screen: "expense",
       })
         .populate("accountledger")
@@ -741,7 +743,7 @@ const integrate_accounttransaction = async (accountTransactions) => {
     if (accountTransactions.length > 0) {
       const deletData = await Accounttransaction.deleteMany({
         doc_id: accountTransactions[0]?.doc_id,
-        school: accountTransactions[0]?.school,
+        company: accountTransactions[0]?.company,
       });
       console.log("deletData", deletData);
 

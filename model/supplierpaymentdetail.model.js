@@ -1,25 +1,23 @@
 const mongoose = require("mongoose");
 
-const receiptdetailSchema = new mongoose.Schema({
+const supplierpaymentdetailSchema = new mongoose.Schema({
   company: { type: mongoose.Schema.ObjectId, ref: "Company" },
-  receiptId: {
+  paymentId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Receipt",
+    ref: "Supplierpayment",
     required: true,
   },
-  customer: {
+  piId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Customer",
+    ref: "Purchaseinvoice",
     required: true,
   },
-  siId: {
+  piCode: { type: String, default: "" },
+  supplier: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Salesinvoice",
+    ref: "Supplier",
     required: true,
   },
-  siCode: { type: String, default: "" },
-  month: { type: Number, default: new Date().getMonth() + 1 },
-  monthname: { type: String, default: "" },
   invAmount: { type: Number, default: 0 },
   paidAmount: { type: Number, default: 0 },
   remarks: { type: String, default: "" },
@@ -28,4 +26,7 @@ const receiptdetailSchema = new mongoose.Schema({
   createdAt: { type: Date, default: new Date() },
 });
 
-module.exports = mongoose.model("Receiptdetail", receiptdetailSchema);
+module.exports = mongoose.model(
+  "Supplierpaymentdetail",
+  supplierpaymentdetailSchema,
+);

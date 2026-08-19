@@ -120,7 +120,7 @@ module.exports = {
         }
       }
 
-      // SCHOOL NAME
+      // COMPANY NAME
       doc
         .font("Helvetica-Bold")
         .fontSize(16)
@@ -524,7 +524,7 @@ module.exports = {
         }
       }
 
-      // SCHOOL NAME
+      // COMPANY NAME
       doc
         .font("Helvetica-Bold")
         .fontSize(16)
@@ -843,412 +843,7 @@ module.exports = {
       });
     }
   },
-  printFeeInvoice: async (req, res) => {
-    try {
-      const filterQuery = {};
-      const companyId = req.user.companyId;
-      console.log(companyId, "companyId");
 
-      const appsettingData = await appsettings(companyId);
-      console.log("appsettingData", appsettingData);
-      const print_tax =
-        (appsettingData && appsettingData.appsettingData?.print_tax) || false;
-
-      filterQuery["company"] = new mongoose.Types.ObjectId(companyId);
-
-      let id = "";
-      if (req.query.id) {
-        id = new mongoose.Types.ObjectId(req.query.id);
-        filterQuery._id = id;
-      }
-
-      const printSalesinvoice = await Salesinvoice.findById(filterQuery)
-        .populate("company")
-        .populate("customer")
-        .populate("class")
-        .populate("geolocation")
-        .lean();
-
-      const printSalesinvoicedetail = await Salesinvoicedetail.find({
-        siId: id,
-      })
-        .populate("feestructure")
-        .lean();
-
-      if (!printSalesinvoice) {
-        return res.status(404).json({
-          success: false,
-          message: "Invoice not found",
-        });
-      }
-
-      // ==============================
-      // PDF INIT
-      // ==============================
-
-      const doc = new PDFDocument({
-        // size: "A4",
-        // margin: 40
-        size: "A4",
-        layout: "landscape", // ✅ IMPORTANT
-        margin: 30,
-      });
-
-      res.writeHead(200, {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename=FeeInvoice-${printSalesinvoice.siCode}.pdf`,
-      });
-
-      doc.pipe(res);
-
-      const companyInfo = printSalesinvoice.company || {};
-
-      // ==============================
-      // HEADER WITH LOGO
-      // ==============================
-
-      const logoX = 40;
-      const logoY = 30;
-      const logoWidth = 55;
-
-      const textStartX = logoX + logoWidth + 15;
-
-      // LOGO
-      if (companyInfo?.company_image) {
-        try {
-          const img = await axios.get(companyInfo.company_image, {
-            responseType: "arraybuffer",
-          });
-
-          doc.image(img.data, logoX, logoY, {
-            width: logoWidth,
-            height: 55,
-          });
-        } catch (err) {
-          console.log("Logo load failed");
-        }
-      }
-
-      // SCHOOL NAME
-      doc
-        .font("Helvetica-Bold")
-        .fontSize(16)
-        .text(companyInfo.company_name || "School Name", textStartX, logoY, {
-          align: "left",
-        });
-
-      // ADDRESS
-      doc
-        .font("Helvetica")
-        .fontSize(10)
-        .text(
-          `${companyInfo.address || ""}, ${companyInfo.city || ""}`,
-          textStartX,
-          logoY + 22,
-        );
-
-      doc.text(
-        `${companyInfo.state || ""}, ${companyInfo.country || ""}`,
-        textStartX,
-        logoY + 38,
-      );
-
-      // DIVIDER
-      const dividerY = logoY + 70;
-
-      doc
-        .moveTo(40, dividerY)
-        .lineTo(doc.page.width - 40, dividerY)
-        .stroke();
-
-      // ==============================
-      // REPORT TITLE
-      // ==============================
-
-      doc
-        .font("Helvetica-Bold")
-        .fontSize(18)
-        .text("FEE INVOICE", 0, dividerY + 15, {
-          align: "center",
-        });
-
-      let y = dividerY + 55;
-
-      // ==============================
-      // INVOICE DETAILS
-      // ==============================
-
-      const leftX = 50;
-      const rightX = 320;
-
-      const labelWidth = 110;
-      const valueWidth = 180;
-
-      const rowGap = 25;
-
-      const drawField = (label, value, x, currentY) => {
-        doc.font("Helvetica-Bold").fontSize(10).text(label, x, currentY, {
-          width: labelWidth,
-        });
-
-        doc.font("Helvetica").text(value || "-", x + labelWidth, currentY, {
-          width: valueWidth,
-        });
-      };
-
-      // ROW 1
-      drawField("Invoice # :", printSalesinvoice.siCode, leftX, y);
-
-      drawField(
-        "Invoice Date :",
-        dayjs(printSalesinvoice.invoiceDate).format("DD/MM/YYYY"),
-        rightX,
-        y,
-      );
-
-      y += rowGap;
-
-      // ROW 2
-      drawField("Class :", printSalesinvoice.class?.class_name, leftX, y);
-
-      drawField(
-        "Geolocation :",
-        printSalesinvoice.geolocation?.geolocation_name,
-        rightX,
-        y,
-      );
-
-      y += rowGap;
-
-      // ROW 3
-      drawField("Customer :", printSalesinvoice.customer?.name, leftX, y);
-
-      drawField("Status :", printSalesinvoice.status, rightX, y);
-
-      y += 40;
-
-      // ==============================
-      // TABLE CONFIG
-      // ==============================
-
-      const tableX = 40;
-
-      const columns = [
-        { label: "S.No", width: 45 },
-        { label: "Description", width: 170 },
-        { label: "Frequency", width: 90 },
-        { label: "Fee Amount", width: 80 },
-        { label: "Gross", width: 80 },
-        { label: "Discount", width: 80 },
-
-        ...(print_tax
-          ? [
-              { label: "Tax %", width: 70 },
-              { label: "Tax Amount", width: 90 },
-              { label: "Taxable Amount", width: 100 },
-            ]
-          : []),
-
-        { label: "Net", width: 80 },
-      ];
-      const availableWidth =
-        doc.page.width - doc.page.margins.left - doc.page.margins.right;
-
-      const totalWidth = columns.reduce((sum, c) => sum + c.width, 0);
-
-      if (totalWidth > availableWidth) {
-        const scale = availableWidth / totalWidth;
-
-        columns.forEach((col) => {
-          col.width = Math.floor(col.width * scale);
-        });
-      }
-
-      // ==============================
-      // DRAW TABLE HEADER
-      // ==============================
-
-      const drawTableHeader = () => {
-        let x = tableX;
-
-        doc.font("Helvetica-Bold").fontSize(9);
-
-        columns.forEach((col) => {
-          doc.rect(x, y, col.width, 25).fill("#f2f2f2");
-
-          doc.rect(x, y, col.width, 25).stroke();
-
-          doc.fillColor("black").text(col.label, x + 5, y + 8, {
-            width: col.width - 10,
-            align: "center",
-          });
-
-          x += col.width;
-        });
-
-        y += 25;
-      };
-
-      drawTableHeader();
-
-      // ==============================
-      // DRAW ROW
-      // ==============================
-
-      const drawRow = (item, index) => {
-        let x = tableX;
-
-        const rowHeight = 30;
-
-        // PAGE BREAK
-        if (y + rowHeight > doc.page.height - 50) {
-          doc.addPage();
-          y = 50;
-          drawTableHeader();
-        }
-
-        const row = [
-          index + 1,
-          item.feestructure?.name || "-",
-          item.feeFrequency || "-",
-          Number(item.feeAmount || 0).toFixed(0),
-          Number(item.grossAmount || 0).toFixed(0),
-          Number(item.discountAmount || 0).toFixed(0),
-
-          ...(print_tax
-            ? [
-                Number(item.tax_percent || 0).toFixed(0),
-                Number(item.tax_amount || 0).toFixed(0),
-                Number(item.taxable_amount || 0).toFixed(0),
-              ]
-            : []),
-
-          Number(item.netAmount || 0).toFixed(0),
-        ];
-
-        row.forEach((cell, i) => {
-          const col = columns[i];
-
-          const isNumberColumn = [
-            "Fee Amount",
-            "Gross",
-            "Discount",
-            "Tax %",
-            "Tax Amount",
-            "Taxable Amount",
-            "Net",
-          ].includes(col.label);
-
-          doc.rect(x, y, col.width, rowHeight).stroke();
-
-          doc
-            .font("Helvetica")
-            .fontSize(9)
-            .fillColor("black")
-            .text(String(cell), x + 5, y + 8, {
-              width: col.width - 10,
-              align: isNumberColumn ? "right" : "left",
-              // align: i >= 3 ? "right" : "left"
-            });
-
-          x += col.width;
-        });
-
-        y += rowHeight;
-      };
-
-      // ==============================
-      // TABLE ROWS
-      // ==============================
-
-      printSalesinvoicedetail.forEach((item, index) => {
-        drawRow(item, index);
-      });
-
-      // ==============================
-      // TOTAL ROW
-      // ==============================
-
-      let x = tableX;
-
-      const totals = printSalesinvoicedetail.reduce(
-        (acc, item) => {
-          acc.gross += Number(item.grossAmount || 0);
-          acc.discount += Number(item.discountAmount || 0);
-          acc.taxPercent += Number(item.tax_percent || 0);
-          acc.taxAmount += Number(item.tax_amount || 0);
-          acc.taxable += Number(item.taxable_amount || 0);
-          acc.net += Number(item.netAmount || 0);
-
-          return acc;
-        },
-        {
-          gross: 0,
-          discount: 0,
-          taxPercent: 0,
-          taxAmount: 0,
-          taxable: 0,
-          net: 0,
-        },
-      );
-
-      const totalRow = [
-        "",
-        "",
-        "TOTAL",
-        "",
-
-        totals.gross.toFixed(0),
-        totals.discount.toFixed(0),
-
-        ...(print_tax
-          ? ["", totals.taxAmount.toFixed(0), totals.taxable.toFixed(0)]
-          : []),
-
-        totals.net.toFixed(0),
-      ];
-      totalRow.forEach((cell, i) => {
-        const col = columns[i];
-
-        doc.rect(x, y, col.width, 30).fillAndStroke("#f9f9f9", "#000");
-
-        doc
-          .font("Helvetica-Bold")
-          .fontSize(9)
-          .fillColor("black")
-          .text(String(cell), x + 5, y + 8, {
-            width: col.width - 10,
-            align: i >= 3 ? "right" : "center",
-          });
-
-        x += col.width;
-      });
-
-      y += 50;
-
-      // ==============================
-      // FOOTER
-      // ==============================
-
-      doc
-        .font("Helvetica")
-        .fontSize(10)
-        .text("Authorized Signature", doc.page.width - 280, y);
-
-      // ==============================
-      // END PDF
-      // ==============================
-
-      doc.end();
-    } catch (err) {
-      console.error("Error generating invoice PDF", err);
-
-      res.status(500).json({
-        success: false,
-        message: "Error generating invoice PDF",
-      });
-    }
-  },
   printExpense: async (req, res) => {
     try {
       const filterQuery = {};
@@ -1331,11 +926,11 @@ module.exports = {
         }
       }
 
-      // SCHOOL NAME
+      // COMPANY NAME
       doc
         .font("Helvetica-Bold")
         .fontSize(16)
-        .text(companyInfo.company_name || "School Name", textStartX, logoY, {
+        .text(companyInfo.company_name || "Company Name", textStartX, logoY, {
           align: "left",
         });
 
@@ -1683,10 +1278,7 @@ module.exports = {
       const printReceiptdetail = await Receiptdetail.find({
         receiptId: id,
       })
-        .populate("class")
-        .populate("geolocation")
         .populate("customer")
-        .populate("parent")
         .lean();
       // console.log(JSON.stringify(printReceiptdetail));
 
@@ -1696,27 +1288,8 @@ module.exports = {
       const salesinvoiceDetails = await Salesinvoicedetail.find({
         siId: { $in: siIds },
       })
-        .populate("feestructure")
+        .populate("item")
         .lean();
-      // console.log(JSON.stringify(salesinvoiceDetails));
-
-      const feeNamesByCustomer = salesinvoiceDetails.reduce((acc, item) => {
-        if (!acc[item.customer]) {
-          acc[item.customer] = [];
-        }
-
-        acc[item.customer].push(item.feestructure.name);
-
-        return acc;
-      }, {});
-
-      // Convert arrays to comma-separated strings
-      Object.keys(feeNamesByCustomer).forEach((customerId) => {
-        feeNamesByCustomer[customerId] =
-          feeNamesByCustomer[customerId].join(", ");
-      });
-
-      console.log(feeNamesByCustomer);
 
       if (!printReceipt) {
         return res.status(404).json({
@@ -1770,11 +1343,11 @@ module.exports = {
         }
       }
 
-      // SCHOOL NAME
+      // COMPANY NAME
       doc
         .font("Helvetica-Bold")
         .fontSize(16)
-        .text(companyInfo.company_name || "School Name", textStartX, logoY, {
+        .text(companyInfo.company_name || "Company Name", textStartX, logoY, {
           align: "left",
         });
 
@@ -1939,13 +1512,10 @@ module.exports = {
         }
 
         const customerId = item?.customer?._id || "";
-        const particulars = feeNamesByCustomer[customerId];
+        const particulars = "";
 
         console.log(particulars);
-        const customer_name =
-          (item?.customer?.name || "-") +
-          " " +
-          (item?.class?.class_name || "-");
+        const customer_name = item?.customer?.name || "-";
         const row = [
           index + 1,
           customer_name,
@@ -2126,11 +1696,11 @@ module.exports = {
         }
       }
 
-      // SCHOOL NAME
+      // COMPANY NAME
       doc
         .font("Helvetica-Bold")
         .fontSize(16)
-        .text(companyInfo.company_name || "School Name", textStartX, logoY, {
+        .text(companyInfo.company_name || "Company Name", textStartX, logoY, {
           align: "left",
         });
 

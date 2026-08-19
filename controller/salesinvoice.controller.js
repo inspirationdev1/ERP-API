@@ -22,7 +22,8 @@ module.exports = {
       const allSalesinvoice = await Salesinvoice.find({ company: companyId })
         .populate("customer")
         .populate("geolocation")
-        .populate("company");
+        .populate("company")
+        .sort({ createdAt: -1 });
       res.status(200).json({
         success: true,
         message: "Success in fetching all  Salesinvoice",
