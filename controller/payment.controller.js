@@ -2,8 +2,7 @@ require("dotenv").config();
 const mongoose = require("mongoose");
 const Payment = require("../model/payment.model");
 const Paymentdetail = require("../model/paymentdetail.model");
-const Exam = require("../model/examination.model");
-const Period = require("../model/period.model");
+
 const Accounttransaction = require("../model/accounttransaction.model");
 const Accountsetup = require("../model/accountsetup.model");
 

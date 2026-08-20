@@ -12,8 +12,10 @@ const {
 module.exports = {
   getAllJournalvouchers: async (req, res) => {
     try {
-      const schoolId = req.user.schoolId;
-      const allJournalvoucher = await Journalvoucher.find({ school: schoolId });
+      const companyId = req.user.companyId;
+      const allJournalvoucher = await Journalvoucher.find({
+        company: companyId,
+      });
       res.status(200).json({
         success: true,
         message: "Success in fetching all  Journalvoucher",
@@ -29,12 +31,12 @@ module.exports = {
   },
   createJournalvoucher: async (req, res) => {
     try {
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
 
       //***Number seq */
       const numberseqData = await getNumberseqWithScreenId({
         screen_id: "journalvoucher",
-        schoolId: req.user.schoolId,
+        companyId: req.user.companyId,
       });
       console.log("numberseqData.data", numberseqData);
       let seq = 1;
@@ -48,7 +50,7 @@ module.exports = {
       // 1️⃣ Save journalvoucher
       const newJournalvoucher = new Journalvoucher({
         ...req.body,
-        school: schoolId,
+        company: companyId,
         jv_code: code,
         seq: seq,
       });
@@ -60,7 +62,7 @@ module.exports = {
       const jv_id = savedData._id || null;
       const journalvoucherDetails = jvDetail.map((item) => ({
         ...item,
-        school: schoolId,
+        company: companyId,
         jv_id: jv_id,
       }));
 
@@ -85,7 +87,7 @@ module.exports = {
       // ****Update Number Seq****
       const numberseqAfterUpdate = await updateNumberseqWithScreenId({
         screen_id: "journalvoucher",
-        schoolId: req.user.schoolId,
+        companyId: req.user.companyId,
       });
       console.log("numberseqAfterUpdate", numberseqAfterUpdate);
       // *********************
@@ -107,7 +109,7 @@ module.exports = {
   getJournalvoucherWithId: async (req, res) => {
     try {
       const id = req.params.id;
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
 
       const amountTypes = [
         {
@@ -126,7 +128,7 @@ module.exports = {
         {
           $match: {
             _id: new mongoose.Types.ObjectId(id),
-            school: new mongoose.Types.ObjectId(schoolId),
+            company: new mongoose.Types.ObjectId(companyId),
           },
         },
         {
@@ -197,67 +199,7 @@ module.exports = {
         },
       ]);
 
-      //   const result = await Journalvoucher.aggregate([
-      //     {
-      //       $match: {
-      //         _id: new mongoose.Types.ObjectId(id),
-      //         school: new mongoose.Types.ObjectId(schoolId),
-      //       },
-      //     },
-      //     {
-      //       $lookup: {
-      //         from: "journalvoucherdetails", // 👈 collection name (IMPORTANT)
-      //         localField: "_id",
-      //         foreignField: "jv_id",
-      //         as: "journalvoucherDetails",
-      //       },
-      //     },
-
-      //     {
-      //       $lookup: {
-      //         from: "accountledgers",
-      //         localField: "journalvoucherDetails.accountledger",
-      //         foreignField: "_id",
-      //         as: "accountledgerData",
-      //       },
-      //     },
-      //     {
-      //       $addFields: {
-      //         journalvoucherDetails: {
-      //           $map: {
-      //             input: "$journalvoucherDetails",
-      //             as: "detail",
-      //             in: {
-      //               $mergeObjects: [
-      //                 "$$detail",
-      //                 {
-      //                   accountledger: {
-      //                     $arrayElemAt: [
-      //                       {
-      //                         $filter: {
-      //                           input: "$accountledgerData",
-      //                           as: "fs",
-      //                           cond: {
-      //                             $eq: ["$$fs._id", "$$detail.accountledger"],
-      //                           },
-      //                         },
-      //                       },
-      //                       0,
-      //                     ],
-      //                   },
-      //                 },
-      //               ],
-      //             },
-      //           },
-      //         },
-      //       },
-      //     },
-      //     {
-      //       $project: {
-      //         accountledgerData: 0, // cleanup
-      //       },
-      //     },
-      //   ]);
+      
 
       if (!result.length) {
         return res.status(404).json({
@@ -279,9 +221,9 @@ module.exports = {
     }
   },
   updateJournalvoucherWithId: async (req, res) => {
-    // Not providing the  schoolId as journalvoucher Id will be unique.
+    // Not providing the  companyId as journalvoucher Id will be unique.
     try {
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
 
       let id = req.params.id;
       console.log(req.body);
@@ -294,7 +236,7 @@ module.exports = {
       const jv_id = id || null;
       const journalvoucherDetails = jvDetail.map((item) => ({
         ...item,
-        school: schoolId,
+        company: companyId,
         jv_id: jv_id,
       }));
 
@@ -306,7 +248,7 @@ module.exports = {
       if (journalvoucherDetails.length > 0) {
         await Journalvoucherdetail.deleteMany({
           jv_id: jv_id,
-          school: schoolId,
+          company: companyId,
         });
 
         await Journalvoucherdetail.insertMany(journalvoucherDetails);
@@ -339,7 +281,7 @@ module.exports = {
   },
   deleteJournalvoucherWithId: async (req, res) => {
     try {
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
       let id = req.params.id;
 
       await Journalvoucher.findOneAndUpdate(
@@ -352,7 +294,7 @@ module.exports = {
         { $set: { status: "cancel" } },
         { new: true }, // optional: returns updated document
       );
-      // await Journalvoucher.findOneAndDelete({ _id: id, school: schoolId });
+      // await Journalvoucher.findOneAndDelete({ _id: id, company: companyId });
       const JournalvoucherAfterDelete = await Journalvoucher.findOne({
         _id: id,
       });
@@ -372,10 +314,10 @@ module.exports = {
   getJournalvoucherWithEmployeeId: async (req, res) => {
     try {
       const id = req.params.id;
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
 
       const filterQuery = {};
-      filterQuery["school"] = new mongoose.Types.ObjectId(schoolId);
+      filterQuery["company"] = new mongoose.Types.ObjectId(companyId);
 
       if (req.query.hasOwnProperty("employee")) {
         const employeeId = req.query.employee;
@@ -463,26 +405,26 @@ module.exports = {
   getJournalvoucherPrint: async (req, res) => {
     try {
       const id = req.params.id;
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
 
       const result = await Journalvoucher.aggregate([
         {
           $match: {
             _id: new mongoose.Types.ObjectId(id),
-            school: new mongoose.Types.ObjectId(schoolId),
+            company: new mongoose.Types.ObjectId(companyId),
           },
         },
-        // 🔹 Populate school
+        // 🔹 Populate company
         {
           $lookup: {
-            from: "schools", // collection name
-            localField: "school",
+            from: "companys", // collection name
+            localField: "company",
             foreignField: "_id",
-            as: "school",
+            as: "company",
           },
         },
         {
-          $unwind: "$school", // convert array → object
+          $unwind: "$company", // convert array → object
         },
 
         // 🧑‍💼 EMPLOYEE POPULATE
@@ -593,7 +535,7 @@ const integrate_accounttransaction = async (transDetails) => {
     if (transDetails.length > 0) {
       await Accounttransaction.deleteMany({
         doc_id: transDetails[0]?.jv_id,
-        school: transDetails[0]?.school,
+        company: transDetails[0]?.company,
       });
       await Accounttransaction.insertMany(transDetails);
     }
