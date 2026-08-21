@@ -7,6 +7,8 @@ const {
   printExpense,
   printReceipt,
   printJournalvoucher,
+  printPayment,
+  printSupplierPayment,
 } = require("../controller/printreports.controller");
 
 router.post(
@@ -29,6 +31,16 @@ router.post(
   "/print-receipt",
   authMiddleware(["COMPANY", "USER", "TEACHER", "STUDENT", "PARENT"]),
   printReceipt,
+);
+router.post(
+  "/print-payment",
+  authMiddleware(["COMPANY", "USER"]),
+  printPayment,
+);
+router.post(
+  "/print-supplierpayment",
+  authMiddleware(["COMPANY", "USER"]),
+  printSupplierPayment,
 );
 
 router.post(
