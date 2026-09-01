@@ -69,7 +69,8 @@ const supplierpaymentRouter = require("./router/supplierpayment.router");
 const journalvoucherRouter = require("./router/journalvoucher.router");
 
 const schoolreportsRouter = require("./router/schoolreports.router");
-
+const salesreportsRouter = require("./router/salesreports.router");
+const purchasereportsRouter = require("./router/purchasereports.router");
 const printreportsRouter = require("./router/printreports.router");
 const financereportsRouter = require("./router/financereports.router");
 
@@ -167,6 +168,9 @@ app.use("/api/payment", paymentRouter);
 app.use("/api/supplierpayment", supplierpaymentRouter);
 
 app.use("/api/journalvoucher", journalvoucherRouter);
+
+app.use("/api/salesreports", salesreportsRouter);
+app.use("/api/purchasereports", purchasereportsRouter);
 
 app.use("/api/schoolreports", schoolreportsRouter);
 app.use("/api/printreports", printreportsRouter);

@@ -6,7 +6,11 @@ const customerSchema = new mongoose.Schema({
   name: { type: String, required: true },
   customer_code: { type: String, required: true },
   seq: { type: Number, default: 0 },
-  // geolocation: { type: mongoose.Schema.ObjectId, ref: "Class" },
+  geolocation: {
+    type: mongoose.Schema.ObjectId,
+    ref: "Geolocation",
+    default: null,
+  },
   joinDate: { type: Date, default: new Date() },
   status: {
     type: String,
