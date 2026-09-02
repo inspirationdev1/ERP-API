@@ -4,6 +4,7 @@ const authMiddleware = require("../auth/auth");
 const {
   getCustomerListPrint,
   printSalesSummaryCustomer,
+  printSalesSummaryItem,
 } = require("../controller/salesreports.controller");
 
 router.get(
@@ -16,6 +17,11 @@ router.get(
   "/sales-summary-customer-print",
   authMiddleware(["COMPANY", "USER"]),
   printSalesSummaryCustomer,
+);
+router.get(
+  "/sales-summary-item-print",
+  authMiddleware(["COMPANY", "USER"]),
+  printSalesSummaryItem,
 );
 
 module.exports = router;
