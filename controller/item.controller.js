@@ -44,7 +44,6 @@ module.exports = {
     const id = req.params.id;
     const companyId = req.user.companyId;
     Item.findOne({ _id: id, company: companyId })
-      .populate("class")
       .populate("itemtype")
       .populate("taxrate")
       .then((resp) => {
@@ -66,20 +65,16 @@ module.exports = {
       });
   },
   getItemWithQuery: async (req, res) => {
-    // const classId = req.params.student_class||"";
-    // const companyId = req.user.companyId;
-
     const filterQuery = {};
     const companyId = req.user.companyId;
     console.log(companyId, "companyId");
     filterQuery["company"] = companyId;
 
-    if (req.query.hasOwnProperty("class")) {
-      filterQuery["class"] = req.query.class;
+    if (req.query.hasOwnProperty("itemtype")) {
+      filterQuery["itemtype"] = req.query.itemtype;
     }
 
     Item.find(filterQuery)
-      .populate("class")
       .populate("itemtype")
       .populate("taxrate")
       .then((resp) => {
@@ -108,7 +103,6 @@ module.exports = {
       console.log(req.body);
       await Item.findOneAndUpdate({ _id: id }, { $set: { ...req.body } });
       const ItemAfterUpdate = await Item.findOne({ _id: id })
-        .populate("class")
         .populate("itemtype")
         .populate("taxrate");
       res.status(200).json({
