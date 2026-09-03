@@ -5,6 +5,7 @@ const {
   getSupplierListPrint,
   printPurchaseSummarySupplier,
   printPurchaseSummaryItem,
+  printPurchaseInvoiceList,
 } = require("../controller/purchasereports.controller");
 
 router.get(
@@ -23,6 +24,11 @@ router.get(
   "/purchase-summary-item-print",
   authMiddleware(["COMPANY", "USER"]),
   printPurchaseSummaryItem,
+);
+router.get(
+  "/purchase-invoice-list-print",
+  authMiddleware(["COMPANY", "USER"]),
+  printPurchaseInvoiceList,
 );
 
 module.exports = router;

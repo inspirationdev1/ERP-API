@@ -5,6 +5,7 @@ const {
   getCustomerListPrint,
   printSalesSummaryCustomer,
   printSalesSummaryItem,
+  printSalesInvoiceList,
 } = require("../controller/salesreports.controller");
 
 router.get(
@@ -22,6 +23,12 @@ router.get(
   "/sales-summary-item-print",
   authMiddleware(["COMPANY", "USER"]),
   printSalesSummaryItem,
+);
+
+router.get(
+  "/sales-invoice-list-print",
+  authMiddleware(["COMPANY", "USER"]),
+  printSalesInvoiceList,
 );
 
 module.exports = router;
