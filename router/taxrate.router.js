@@ -11,5 +11,5 @@ router.patch("/update/:id",authMiddleware(['COMPANY','USER']), updateTaxrateWith
 router.delete("/delete/:id",authMiddleware(['COMPANY','USER']), deleteTaxrateWithId);
 
 
-
+ 
 module.exports = router;
