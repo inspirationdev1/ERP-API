@@ -8,6 +8,7 @@ const itemSchema = new mongoose.Schema({
     required: true,
   },
   itemtype: { type: mongoose.Schema.ObjectId, ref: "Itemtype", required: true },
+  itemgroup: { type: mongoose.Schema.ObjectId, ref: "Itemgroup", required: true },
   taxrate: { type: mongoose.Schema.ObjectId, ref: "Taxrate" },
   tax_percent: {
     type: Number,

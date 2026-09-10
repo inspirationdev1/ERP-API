@@ -46,6 +46,7 @@ module.exports = {
     Item.findOne({ _id: id, company: companyId })
       .populate("itemtype")
       .populate("taxrate")
+      .populate("itemgroup")
       .then((resp) => {
         if (resp) {
           res.status(200).json({ success: true, data: resp });

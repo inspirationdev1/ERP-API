@@ -42,12 +42,13 @@ const examtypeRouter = require("./router/examtype.router");
 const generalmasterRouter = require("./router/generalmaster.router");
 const menuRouter = require("./router/menu.router");
 const roleRouter = require("./router/role.router");
+const userpermissionRouter = require("./router/userpermission.router");
 const screenRouter = require("./router/screen.router");
 const numberseqRouter = require("./router/numberseq.router");
 
 const feestructureRouter = require("./router/feestructure.router");
 const itemRouter = require("./router/item.router");
-
+const itemgroupRouter = require("./router/itemgroup.router");
 const salesinvoiceRouter = require("./router/salesinvoice.router");
 const purchaseinvoiceRouter = require("./router/purchaseinvoice.router");
 const marksheetRouter = require("./router/marksheet.router");
@@ -146,11 +147,13 @@ app.use("/api/generalmaster", generalmasterRouter);
 
 app.use("/api/menu", menuRouter);
 app.use("/api/role", roleRouter);
+app.use("/api/userpermission", userpermissionRouter);
 app.use("/api/screen", screenRouter);
 app.use("/api/numberseq", numberseqRouter);
 
 app.use("/api/feestructure", feestructureRouter);
 app.use("/api/item", itemRouter);
+app.use("/api/itemgroup", itemgroupRouter);
 app.use("/api/salesinvoice", salesinvoiceRouter);
 app.use("/api/purchaseinvoice", purchaseinvoiceRouter);
 app.use("/api/marksheet", marksheetRouter);
