@@ -18,7 +18,7 @@ module.exports = {
   getAllUsers: async (req, res) => {
     try {
       const companyId = req.user.companyId;
-      const allUser = await User.find({ company: companyId });
+      const allUser = await User.find({ company: companyId }).populate("role");
       res.status(200).json({
         success: true,
         message: "Success in fetching all  Section",
@@ -41,7 +41,7 @@ module.exports = {
         filterQuery["name"] = { $regex: req.query.search, $options: "i" };
       }
 
-      const filteredUsers = await User.find(filterQuery);
+      const filteredUsers = await User.find(filterQuery).populate("role");
       res.status(200).json({ success: true, data: filteredUsers });
     } catch (error) {
       console.log("Error in fetching User with query", error);
@@ -118,6 +118,7 @@ module.exports = {
         const newUser = new User({
           email: fields.email[0],
           name: fields.name[0],
+          role: fields.role[0],
           user_image: photoUrl,
           password: hashPassword,
           user_code: code || "",
@@ -207,23 +208,17 @@ module.exports = {
       });
   },
   getUserWithId: async (req, res) => {
-    const id = req.params.id;
-    User.findById(id)
-      .then((resp) => {
-        if (resp) {
-          res.status(200).json({ success: true, data: resp });
-        } else {
-          res
-            .status(500)
-            .json({ success: false, message: "User data not Available" });
-        }
-      })
-      .catch((e) => {
-        console.log("Error in getUserWithId", e);
-        res
-          .status(500)
-          .json({ success: false, message: "Error in getting  User Data" });
-      });
+    try {
+      const id = req.params.id;
+      const user = await User.findById(id).populate("role");
+      console.log(user);
+      res.status(200).json({ success: true, data: user });
+    } catch (error) {
+      console.log("Error in getUserWithId", error);
+      res
+        .status(500)
+        .json({ success: false, message: "Error in getting  User Data" });
+    }
   },
 
   updateUserWithId: async (req, res) => {
