@@ -1,12 +1,52 @@
 require("dotenv").config();
 const Role = require("../model/role.model");
 const Userpermission = require("../model/userpermission.model");
-
+const User = require("../model/user.model");
+const mongoose = require("mongoose");
 module.exports = {
   getAllUserpermissions: async (req, res) => {
     try {
       const companyId = req.user.companyId;
-      const allUserpermission = await Userpermission.find({ company: companyId });
+      const allUserpermission = await User.aggregate([
+        // 1. Filter users by company
+        {
+          $match: {
+            company: new mongoose.Types.ObjectId(companyId),
+          },
+        },
+        {
+          $lookup: {
+            from: "userpermissions",
+            localField: "_id",
+            foreignField: "user",
+            as: "permissions",
+          },
+        },
+        {
+          $lookup: {
+            from: "roles",
+            localField: "role",
+            foreignField: "_id",
+            as: "roleData",
+          },
+        },
+        {
+          $unwind: {
+            path: "$roleData",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            email: 1,
+            user_code: 1,
+            permissionCount: { $size: "$permissions" },
+            role: "$roleData",
+          },
+        },
+      ]);
       res.status(200).json({
         success: true,
         message: "Success in fetching all  Userpermission",
@@ -32,7 +72,51 @@ module.exports = {
         ];
       }
 
-      const filteredUserpermissions = await Userpermission.find(filterQuery).populate("user").populate("role");
+      // const filteredUserpermissions = await User.find(filterQuery)
+      //  .populate("role");
+      const filteredUserpermissions = await User.aggregate([
+        // 1. Filter users by company
+        {
+          $match: {
+            company: new mongoose.Types.ObjectId(companyId),
+          },
+        },
+        {
+          $lookup: {
+            from: "userpermissions",
+            localField: "_id",
+            foreignField: "user",
+            as: "permissions",
+          },
+        },
+        {
+          $lookup: {
+            from: "roles",
+            localField: "role",
+            foreignField: "_id",
+            as: "roleData",
+          },
+        },
+        {
+          $unwind: {
+            path: "$roleData",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            email: 1,
+            user_code: 1,
+            permissionCount: { $size: "$permissions" },
+            role: "$roleData",
+          },
+        },
+      ]);
+
+      console.log(filteredUserpermissions);
+
       res.status(200).json({ success: true, data: filteredUserpermissions });
     } catch (error) {
       console.log("Error in fetching Userpermission with query", error);
@@ -42,44 +126,52 @@ module.exports = {
       });
     }
   },
-  createUserpermission: (req, res) => {
-    const companyId = req.user.companyId;
-    const newUserpermission = new Userpermission({ ...req.body, company: companyId });
-    newUserpermission
-      .save()
-      .then((savedData) => {
-        console.log("Date saved", savedData);
-        res.status(200).json({
-          success: true,
-          data: savedData,
-          message: "Userpermission is Created Successfully.",
-        });
-      })
-      .catch((e) => {
-        console.log("ERRORO in Register", e);
-        res
-          .status(500)
-          .json({ success: false, message: "Failed Creation of Userpermission." });
+  createUserpermission: async (req, res) => {
+    try {
+      const companyId = req.user.companyId;
+      let userpermissions = req.body?.userpermissionsDetails || [];
+
+      userpermissions = userpermissions.map((item) => ({
+        ...item,
+        company: companyId,
+      }));
+      const userPermissionsNewData =
+        await Userpermission.insertMany(userpermissions);
+      res.status(200).json({
+        success: true,
+        message: "Userpermission Updated",
+        data: userPermissionsNewData,
       });
+    } catch (error) {
+      console.log("Error in Create Userpermission", error.message);
+      res.status(500).json({
+        success: false,
+        message: "Server Error in Create Userpermission. Try later",
+      });
+    }
   },
   getUserpermissionWithId: async (req, res) => {
     const id = req.params.id;
     const companyId = req.user.companyId;
-    Userpermission.findOne({ _id: id, company: companyId }).populate("user").populate("role")
+    await Userpermission.find({ user: id, company: companyId })
+      .populate("user")
+      .populate("role")
       .then((resp) => {
         if (resp) {
           res.status(200).json({ success: true, data: resp });
         } else {
-          res
-            .status(500)
-            .json({ success: false, message: "Userpermission data not Available" });
+          res.status(500).json({
+            success: false,
+            message: "Userpermission data not Available",
+          });
         }
       })
       .catch((e) => {
         console.log("Error in getUserpermissionWithId", e);
-        res
-          .status(500)
-          .json({ success: false, message: "Error in getting  Userpermission Data" });
+        res.status(500).json({
+          success: false,
+          message: "Error in getting  Userpermission Data",
+        });
       });
   },
 
@@ -87,13 +179,31 @@ module.exports = {
     // Not providing the  companyId as userpermission Id will be unique.
     try {
       let id = req.params.id;
+      const companyId = req.user.companyId;
       console.log(req.body);
-      await Userpermission.findOneAndUpdate({ _id: id }, { $set: { ...req.body } });
-      const UserpermissionAfterUpdate = await Userpermission.findOne({ _id: id });
+      let userpermissions = req.body?.userpermissionsDetails || [];
+      userpermissions = userpermissions.map((item) => ({
+        ...item,
+        company: companyId,
+      }));
+      await Userpermission.deleteMany({
+        user: id,
+        company: companyId,
+      });
+      const userPermissionsNewData =
+        await Userpermission.insertMany(userpermissions);
+
+      // const UserpermissionAfterUpdate = await Userpermission.find({
+      //   user: id,
+      //   company: companyId,
+      // })
+      //   .populate("user")
+      //   .populate("role");
+
       res.status(200).json({
         success: true,
         message: "Userpermission Updated",
-        data: UserpermissionAfterUpdate,
+        data: userPermissionsNewData,
       });
     } catch (error) {
       console.log("Error in updateUserpermissionWithId", error);
@@ -108,8 +218,51 @@ module.exports = {
       const companyId = req.user.companyId;
       let id = req.params.id;
 
-      await Userpermission.findOneAndDelete({ _id: id, company: companyId });
-      const UserpermissionAfterDelete = await Userpermission.findOne({ _id: id });
+      await Userpermission.deleteMany({
+        user: id,
+        company: companyId,
+      });
+
+      const UserpermissionAfterDelete = await User.aggregate([
+        // 1. Filter users by company
+        {
+          $match: {
+            company: new mongoose.Types.ObjectId(companyId),
+          },
+        },
+        {
+          $lookup: {
+            from: "userpermissions",
+            localField: "_id",
+            foreignField: "user",
+            as: "permissions",
+          },
+        },
+        {
+          $lookup: {
+            from: "roles",
+            localField: "role",
+            foreignField: "_id",
+            as: "roleData",
+          },
+        },
+        {
+          $unwind: {
+            path: "$roleData",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            name: 1,
+            email: 1,
+            user_code: 1,
+            permissionCount: { $size: "$permissions" },
+            role: "$roleData",
+          },
+        },
+      ]);
       res.status(200).json({
         success: true,
         message: "Userpermission Deleted.",
