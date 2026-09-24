@@ -5,44 +5,38 @@ const Accountledger = require("../model/accountledger.model");
 module.exports = {
   getAllAccountledgers: async (req, res) => {
     try {
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
       const allAccountledger = await Accountledger.find({
-        school: schoolId,
+        company: companyId,
       }).populate("groupId");
-      res
-        .status(200)
-        .json({
-          success: true,
-          message: "Success in fetching all  Accountledger",
-          data: allAccountledger,
-        });
+      res.status(200).json({
+        success: true,
+        message: "Success in fetching all  Accountledger",
+        data: allAccountledger,
+      });
     } catch (error) {
       console.log("Error in getAllAccountledger", error);
-      res
-        .status(500)
-        .json({
-          success: false,
-          message: "Server Error in Getting All Accountledger. Try later",
-        });
+      res.status(500).json({
+        success: false,
+        message: "Server Error in Getting All Accountledger. Try later",
+      });
     }
   },
   createAccountledger: (req, res) => {
-    const schoolId = req.user.schoolId;
+    const companyId = req.user.companyId;
     const newAccountledger = new Accountledger({
       ...req.body,
-      school: schoolId,
+      company: companyId,
     });
     newAccountledger
       .save()
       .then((savedData) => {
         console.log("Date saved", savedData);
-        res
-          .status(200)
-          .json({
-            success: true,
-            data: savedData,
-            message: "Accountledger is Created Successfully.",
-          });
+        res.status(200).json({
+          success: true,
+          data: savedData,
+          message: "Accountledger is Created Successfully.",
+        });
       })
       .catch((e) => {
         console.log("ERRORO in Register", e);
@@ -51,34 +45,30 @@ module.exports = {
   },
   getAccountledgerWithId: async (req, res) => {
     const id = req.params.id;
-    const schoolId = req.user.schoolId;
-    Accountledger.findOne({ _id: id, school: schoolId })
+    const companyId = req.user.companyId;
+    Accountledger.findOne({ _id: id, company: companyId })
       .populate("groupId")
       .then((resp) => {
         if (resp) {
           res.status(200).json({ success: true, data: resp });
         } else {
-          res
-            .status(500)
-            .json({
-              success: false,
-              message: "Accountledger data not Available",
-            });
+          res.status(500).json({
+            success: false,
+            message: "Accountledger data not Available",
+          });
         }
       })
       .catch((e) => {
         console.log("Error in getAccountledgerWithId", e);
-        res
-          .status(500)
-          .json({
-            success: false,
-            message: "Error in getting  Accountledger Data",
-          });
+        res.status(500).json({
+          success: false,
+          message: "Error in getting  Accountledger Data",
+        });
       });
   },
 
   updateAccountledgerWithId: async (req, res) => {
-    // Not providing the  schoolId as accountledger Id will be unique.
+    // Not providing the  companyId as accountledger Id will be unique.
     try {
       let id = req.params.id;
       console.log(req.body);
@@ -89,55 +79,47 @@ module.exports = {
       const AccountledgerAfterUpdate = await Accountledger.findOne({
         _id: id,
       }).populate("groupId");
-      res
-        .status(200)
-        .json({
-          success: true,
-          message: "Accountledger Updated",
-          data: AccountledgerAfterUpdate,
-        });
+      res.status(200).json({
+        success: true,
+        message: "Accountledger Updated",
+        data: AccountledgerAfterUpdate,
+      });
     } catch (error) {
       console.log("Error in updateAccountledgerWithId", error);
-      res
-        .status(500)
-        .json({
-          success: false,
-          message: "Server Error in Update Accountledger. Try later",
-        });
+      res.status(500).json({
+        success: false,
+        message: "Server Error in Update Accountledger. Try later",
+      });
     }
   },
   deleteAccountledgerWithId: async (req, res) => {
     try {
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
       let id = req.params.id;
 
-      await Accountledger.findOneAndDelete({ _id: id, school: schoolId });
+      await Accountledger.findOneAndDelete({ _id: id, company: companyId });
       const AccountledgerAfterDelete = await Accountledger.findOne({
         _id: id,
       }).populate("groupId");
-      res
-        .status(200)
-        .json({
-          success: true,
-          message: "Accountledger Deleted.",
-          data: AccountledgerAfterDelete,
-        });
+      res.status(200).json({
+        success: true,
+        message: "Accountledger Deleted.",
+        data: AccountledgerAfterDelete,
+      });
     } catch (error) {
       console.log("Error in updateAccountledgerWithId", error);
-      res
-        .status(500)
-        .json({
-          success: false,
-          message: "Server Error in Deleting Accountledger. Try later",
-        });
+      res.status(500).json({
+        success: false,
+        message: "Server Error in Deleting Accountledger. Try later",
+      });
     }
   },
   getAccountledgerWithQuery: async (req, res) => {
     try {
       const filterQuery = {};
-      const schoolId = req.user.schoolId;
-      console.log(schoolId, "schoolId");
-      filterQuery["school"] = schoolId;
+      const companyId = req.user.companyId;
+      console.log(companyId, "companyId");
+      filterQuery["company"] = companyId;
       if (req.query.hasOwnProperty("search")) {
         filterQuery["accountledger_name"] = {
           $regex: req.query.search,
@@ -154,12 +136,10 @@ module.exports = {
       res.status(200).json({ success: true, data: filteredAccountledgers });
     } catch (error) {
       console.log("Error in fetching Accountledger with query", error);
-      res
-        .status(500)
-        .json({
-          success: false,
-          message: "Error  in fetching Accountledger  with query.",
-        });
+      res.status(500).json({
+        success: false,
+        message: "Error  in fetching Accountledger  with query.",
+      });
     }
   },
 };
