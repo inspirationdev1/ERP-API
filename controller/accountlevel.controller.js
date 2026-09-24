@@ -6,8 +6,8 @@ module.exports = {
 
     getAllAccountlevels: async (req, res) => {
         try {
-            const schoolId = req.user.schoolId;
-            const allAccountlevel = await Accountlevel.find({ school: schoolId }).populate("groupId");
+            const companyId = req.user.companyId;
+            const allAccountlevel = await Accountlevel.find({ company: companyId }).populate("groupId");
             res.status(200).json({ success: true, message: "Success in fetching all  Accountlevel", data: allAccountlevel })
         } catch (error) {
             console.log("Error in getAllAccountlevel", error);
@@ -16,8 +16,8 @@ module.exports = {
 
     },
     createAccountlevel: (req, res) => {
-        const schoolId = req.user.schoolId;
-        const newAccountlevel = new Accountlevel({ ...req.body, school: schoolId });
+        const companyId = req.user.companyId;
+        const newAccountlevel = new Accountlevel({ ...req.body, company: companyId });
         newAccountlevel.save().then(savedData => {
             console.log("Date saved", savedData);
             res.status(200).json({ success: true, data: savedData, message: "Accountlevel is Created Successfully." })
@@ -29,8 +29,8 @@ module.exports = {
     },
     getAccountlevelWithId: async (req, res) => {
         const id = req.params.id;
-        const schoolId = req.user.schoolId;
-        Accountlevel.findOne({ _id: id, school: schoolId }).populate("groupId").then(resp => {
+        const companyId = req.user.companyId;
+        Accountlevel.findOne({ _id: id, company: companyId }).populate("groupId").then(resp => {
             if (resp) {
                 res.status(200).json({ success: true, data: resp })
             } else {
@@ -42,7 +42,7 @@ module.exports = {
         })
     },
     updateAccountlevelWithId: async (req, res) => {
-        // Not providing the  schoolId as accountlevel Id will be unique.
+        // Not providing the  companyId as accountlevel Id will be unique.
         try {
             let id = req.params.id;
             console.log(req.body)
@@ -59,10 +59,10 @@ module.exports = {
     deleteAccountlevelWithId: async (req, res) => {
 
         try {
-            const schoolId = req.user.schoolId;
+            const companyId = req.user.companyId;
             let id = req.params.id;
 
-            await Accountlevel.findOneAndDelete({ _id: id, school: schoolId });
+            await Accountlevel.findOneAndDelete({ _id: id, company: companyId });
             const AccountlevelAfterDelete = await Accountlevel.findOne({ _id: id }).populate("groupId");
             res.status(200).json({ success: true, message: "Accountlevel Deleted.", data: AccountlevelAfterDelete })
 
@@ -79,9 +79,9 @@ module.exports = {
 
         try {
             const filterQuery = {};
-            const schoolId = req.user.schoolId;
-            console.log(schoolId, "schoolId")
-            filterQuery['school'] = schoolId;
+            const companyId = req.user.companyId;
+            console.log(companyId, "companyId")
+            filterQuery['company'] = companyId;
             if (req.query.hasOwnProperty('search')) {
                 filterQuery['accountlevel_name'] = { $regex: req.query.search, $options: 'i' }
             }

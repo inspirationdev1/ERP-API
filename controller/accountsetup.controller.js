@@ -7,9 +7,9 @@ const Screen = require("../model/screen.model");
 module.exports = {
   getAllAccountsetups: async (req, res) => {
     try {
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
       const allAccountsetup = await Accountsetup.find({
-        school: schoolId,
+        company: companyId,
       }).populate("accountledger");
       res.status(200).json({
         success: true,
@@ -27,8 +27,8 @@ module.exports = {
   getAccountsetupWithQuery: async (req, res) => {
     try {
       const filterQuery = {};
-      const schoolId = req.user.schoolId;
-      filterQuery["school"] = schoolId;
+      const companyId = req.user.companyId;
+      filterQuery["company"] = companyId;
 
       if (req.query.search) {
         filterQuery.$or = [
@@ -49,8 +49,8 @@ module.exports = {
     }
   },
   createAccountsetup: (req, res) => {
-    const schoolId = req.user.schoolId;
-    const newAccountsetup = new Accountsetup({ ...req.body, school: schoolId });
+    const companyId = req.user.companyId;
+    const newAccountsetup = new Accountsetup({ ...req.body, company: companyId });
     newAccountsetup
       .save()
       .then((savedData) => {
@@ -71,8 +71,8 @@ module.exports = {
   },
   getAccountsetupWithId: async (req, res) => {
     const id = req.params.id;
-    const schoolId = req.user.schoolId;
-    Accountsetup.findOne({ _id: id, school: schoolId })
+    const companyId = req.user.companyId;
+    Accountsetup.findOne({ _id: id, company: companyId })
       .populate("screen")
       .populate("accountledger")
       .then((resp) => {
@@ -95,7 +95,7 @@ module.exports = {
   },
 
   updateAccountsetupWithId: async (req, res) => {
-    // Not providing the  schoolId as accountsetup Id will be unique.
+    // Not providing the  companyId as accountsetup Id will be unique.
     try {
       let id = req.params.id;
       console.log(req.body);
@@ -119,10 +119,10 @@ module.exports = {
   },
   deleteAccountsetupWithId: async (req, res) => {
     try {
-      const schoolId = req.user.schoolId;
+      const companyId = req.user.companyId;
       let id = req.params.id;
 
-      await Accountsetup.findOneAndDelete({ _id: id, school: schoolId });
+      await Accountsetup.findOneAndDelete({ _id: id, company: companyId });
       const AccountsetupAfterDelete = await Accountsetup.findOne({ _id: id });
       res.status(200).json({
         success: true,
@@ -139,11 +139,11 @@ module.exports = {
   },
   getAccountsetupWithScreenId: async (req, res) => {
     const screen_id = req?.screen_id;
-    const schoolId = req.schoolId;
+    const companyId = req.companyId;
     try {
       const accountsetupData = await Accountsetup.find({
         screen: screen_id,
-        school: new mongoose.Types.ObjectId(schoolId),
+        company: new mongoose.Types.ObjectId(companyId),
       })
         .populate("screen")
         .lean();
@@ -169,15 +169,15 @@ module.exports = {
     }
   },
   updateAccountsetupWithScreenId: async (req, res) => {
-    // Not providing the  schoolId as accountsetup Id will be unique.
+    // Not providing the  companyId as accountsetup Id will be unique.
     try {
       // let id = req.params.id;
       const screen_id = req?.screen_id;
-      const schoolId = req?.schoolId;
+      const companyId = req?.companyId;
 
       const accountSetupData = await Accountsetup.find({
         screen: screen_id,
-        school: new mongoose.Types.ObjectId(schoolId),
+        company: new mongoose.Types.ObjectId(companyId),
       }).lean();
 
       let id = "";
