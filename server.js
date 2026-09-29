@@ -43,6 +43,8 @@ const generalmasterRouter = require("./router/generalmaster.router");
 const menuRouter = require("./router/menu.router");
 const roleRouter = require("./router/role.router");
 const userpermissionRouter = require("./router/userpermission.router");
+const rolepermissionRouter = require("./router/rolepermission.router");
+// role
 const screenRouter = require("./router/screen.router");
 const numberseqRouter = require("./router/numberseq.router");
 
@@ -148,6 +150,7 @@ app.use("/api/generalmaster", generalmasterRouter);
 app.use("/api/menu", menuRouter);
 app.use("/api/role", roleRouter);
 app.use("/api/userpermission", userpermissionRouter);
+app.use("/api/rolepermission", rolepermissionRouter);
 app.use("/api/screen", screenRouter);
 app.use("/api/numberseq", numberseqRouter);
 
