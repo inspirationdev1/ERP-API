@@ -44,13 +44,18 @@ const menuRouter = require("./router/menu.router");
 const roleRouter = require("./router/role.router");
 const userpermissionRouter = require("./router/userpermission.router");
 const rolepermissionRouter = require("./router/rolepermission.router");
-// role
+
 const screenRouter = require("./router/screen.router");
 const numberseqRouter = require("./router/numberseq.router");
 
 const feestructureRouter = require("./router/feestructure.router");
 const itemRouter = require("./router/item.router");
 const itemgroupRouter = require("./router/itemgroup.router");
+
+
+const salesquotationRouter = require("./router/salesquotation.router")
+const salesorderRouter = require("./router/salesorder.router")
+const deliveryorderRouter = require("./router/deliveryorder.router")
 const salesinvoiceRouter = require("./router/salesinvoice.router");
 const purchaseinvoiceRouter = require("./router/purchaseinvoice.router");
 const marksheetRouter = require("./router/marksheet.router");
@@ -157,6 +162,10 @@ app.use("/api/numberseq", numberseqRouter);
 app.use("/api/feestructure", feestructureRouter);
 app.use("/api/item", itemRouter);
 app.use("/api/itemgroup", itemgroupRouter);
+
+app.use("/api/salesquotation", salesquotationRouter);
+app.use("/api/salesorder", salesorderRouter);
+app.use("/api/deliveryorder", deliveryorderRouter);
 app.use("/api/salesinvoice", salesinvoiceRouter);
 app.use("/api/purchaseinvoice", purchaseinvoiceRouter);
 app.use("/api/marksheet", marksheetRouter);
