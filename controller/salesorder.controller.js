@@ -547,6 +547,11 @@ module.exports = {
         ];
       }
 
+      if (req.query.hasOwnProperty("customer")) {
+        const customerId = req.query.customer;
+        filterQuery["customer"] = new mongoose.Types.ObjectId(customerId);
+      }
+
       const filteredSalesorders = await Salesorder.find(filterQuery)
         .populate("customer")
         .populate("geolocation")
