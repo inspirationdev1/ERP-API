@@ -130,8 +130,8 @@ module.exports = {
     }
   },
   getNumberseqWithScreenId: async (req, res) => {
-    const screen_id = req?.screen_id;
-    const companyId = req.companyId;
+    const screen_id = req?.screen_id || req?.screen_id;
+    const companyId = req?.companyId;
     try {
       const numberseqData = await Numberseq.find({
         screen: screen_id,

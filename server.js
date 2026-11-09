@@ -57,6 +57,12 @@ const salesquotationRouter = require("./router/salesquotation.router")
 const salesorderRouter = require("./router/salesorder.router")
 const deliveryorderRouter = require("./router/deliveryorder.router")
 const salesinvoiceRouter = require("./router/salesinvoice.router");
+
+
+const purchasequotationRouter = require("./router/purchasequotation.router")
+const purchaseorderRouter = require("./router/purchaseorder.router")
+const goodsreceivedRouter = require("./router/goodsreceived.router")
+
 const purchaseinvoiceRouter = require("./router/purchaseinvoice.router");
 const marksheetRouter = require("./router/marksheet.router");
 const receiptRouter = require("./router/receipt.router");
@@ -167,6 +173,11 @@ app.use("/api/salesquotation", salesquotationRouter);
 app.use("/api/salesorder", salesorderRouter);
 app.use("/api/deliveryorder", deliveryorderRouter);
 app.use("/api/salesinvoice", salesinvoiceRouter);
+
+app.use("/api/purchasequotation", purchasequotationRouter);
+app.use("/api/purchaseorder", purchaseorderRouter);
+app.use("/api/goodsreceived", goodsreceivedRouter);
+
 app.use("/api/purchaseinvoice", purchaseinvoiceRouter);
 app.use("/api/marksheet", marksheetRouter);
 app.use("/api/receipt", receiptRouter);
